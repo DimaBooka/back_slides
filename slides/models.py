@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 
 
 class Presentation(models.Model):
@@ -7,7 +7,7 @@ class Presentation(models.Model):
     description = models.TextField(max_length=4096)
     slides = models.FileField()
     thumbnail = models.ImageField()
-    creator = models.ForeignKey(User)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL)
     date_created = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField()
 
@@ -16,7 +16,7 @@ class Presentation(models.Model):
 
 
 class Commentary(models.Model):
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL)
     text = models.TextField(max_length=256)
     date_created = models.DateTimeField(auto_now_add=True)
     presentation = models.ForeignKey(Presentation)
