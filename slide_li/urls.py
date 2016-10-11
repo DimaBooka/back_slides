@@ -22,10 +22,13 @@ from django.conf.urls import url, include
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^api/', include('api.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-urlpatterns += i18n_patterns(
-    url(r'^', include('slides.urls')),
-    # url(r'^', include('users.urls')),
-    url(r'^api/', include('api.urls')),
-)
+
+# Not working!
+# urlpatterns += i18n_patterns(
+#     # url(r'^', include('slides.urls')),
+#     # url(r'^', include('users.urls')),
+#     url(r'^api/', include('api.urls')),
+# )
