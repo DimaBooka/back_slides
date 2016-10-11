@@ -1,24 +1,28 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 
 class Presentation(models.Model):
-    name = models.CharField(max_length=40)
+    name = models.CharField(max_length=256)
     description = models.TextField(max_length=4096)
-    slides = models.FileField(upload_to='static/media/presentations')
+    slides = models.FileField()
     thumbnail = models.ImageField()
-    # creator = models.ForeignKey()
-    publish_date = models.DateTimeField()
+    creator = models.ForeignKey(User)
+    date_created = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField()
-    comments = models.ForeignKey(Commentary)
 
     def __str__(self):
         return self.name
 
 
 class Commentary(models.Model):
-    # author = models.ForeignKey()
-    text = models.TextField(max_length=255)
-    publish_date = models.DateTimeField()
+    author = models.ForeignKey(User)
+    text = models.TextField(max_length=256)
+    date_created = models.DateTimeField(auto_now_add=True)
+    presentation = models.ForeignKey(Presentation)
 
     def __str__(self):
         return self.text
