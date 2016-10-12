@@ -5,10 +5,12 @@ from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework import generics
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from api.filters import PresentationFilter, EventFilter, CommentaryFilter
+from api.permissions import IsOwnerOrReadOnly
 from api.serializers import (
     CommentarySerializer,
     EventSerializer,
@@ -47,7 +49,7 @@ def api_root(request, format=None):
 class PresentationViewSet(viewsets.ModelViewSet):
     queryset = Presentation.objects.all()
     serializer_class = PresentationSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAdminUser, IsOwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filter_class = PresentationFilter
 
@@ -55,7 +57,7 @@ class PresentationViewSet(viewsets.ModelViewSet):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAdminUser, IsOwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filter_class = EventFilter
 
@@ -63,7 +65,7 @@ class EventViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Commentary.objects.all()
     serializer_class = CommentarySerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAdminUser, IsOwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filter_class = CommentaryFilter
 
@@ -71,5 +73,5 @@ class CommentViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAdminUser, IsOwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend, OrderingFilter)
