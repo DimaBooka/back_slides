@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -45,3 +46,25 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class SlidesUser(AbstractUser):
+    MALE = 1
+    FEMALE = 2
+    UNKNOWN = 3
+
+    GENDER_CHOICES = (
+        (MALE, 'Male'),
+        (FEMALE, 'Female'),
+        (UNKNOWN, 'Not selected'),
+    )
+
+    birth_date = models.DateField(null=True, blank=True)
+    phone_number = models.CharField(max_length=16, null=True, blank=True)
+    gender = models.IntegerField(choices=GENDER_CHOICES, default=UNKNOWN)
+
+    class Meta:
+        swappable = 'AUTH_USER_MODEL'
+
+    def __str__(self):
+        return self.username

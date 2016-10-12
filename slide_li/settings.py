@@ -132,6 +132,8 @@ REST_FRAMEWORK = {
     'PAGINATE_BY': 10
 }
 
+AUTH_USER_MODEL = 'slides.SlidesUser'
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
