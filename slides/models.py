@@ -5,8 +5,8 @@ from django.db import models
 class Presentation(models.Model):
     name = models.CharField(max_length=256)
     description = models.TextField(max_length=4096)
-    slides = models.FileField()
-    thumbnail = models.ImageField()
+    slides = models.FileField(upload_to='presentations')
+    thumbnail = models.ImageField(upload_to='thumbnails')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL)
     date_created = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField()
