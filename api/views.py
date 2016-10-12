@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 
 from rest_framework.decorators import api_view
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
-from rest_framework import generics
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
@@ -15,7 +14,6 @@ from api.serializers import (
     CommentarySerializer,
     EventSerializer,
     PresentationSerializer,
-    PresentationSerializer,
     UserSerializer,
 )
 from slides.models import (
@@ -26,14 +24,6 @@ from slides.models import (
 
 
 User = get_user_model()
-
-
-class PublicPresentationsList(generics.ListCreateAPIView):
-    """
-    Returns list of presentations that (published == true)
-    """
-    queryset = Presentation.objects.filter(published=True)
-    serializer_class = PresentationSerializer
 
 
 @api_view(['GET'])
