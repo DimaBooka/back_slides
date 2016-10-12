@@ -8,6 +8,7 @@ router = DefaultRouter()
 
 router.register(r'presentations', views.PresentationViewSet)
 router.register(r'events', views.EventViewSet)
+router.register(r'comments', views.CommentViewSet)
 
 urlpatterns = [
     url(r'^', include(router.urls)),

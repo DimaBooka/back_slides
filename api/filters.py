@@ -20,4 +20,4 @@ class CommentaryFilter(FilterSet):
 
     class Meta:
         model = Commentary
-        fields = ('presentation__name', 'date_created')
+        fields = ('presentation_id', 'date_created')
