@@ -1,5 +1,9 @@
 from django.contrib.auth import get_user_model
 
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from rest_auth.registration.views import SocialLoginView
+
 from rest_framework.decorators import api_view
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework import permissions
@@ -14,7 +18,6 @@ from api.serializers import (
     CommentarySerializer,
     EventSerializer,
     PresentationSerializer,
-    UserSerializer,
 )
 from slides.models import (
     Commentary,
@@ -60,8 +63,9 @@ class CommentViewSet(viewsets.ModelViewSet):
     filter_class = CommentaryFilter
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAdminUser, IsOwnerOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, OrderingFilter)
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter

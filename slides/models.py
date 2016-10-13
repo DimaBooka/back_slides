@@ -48,7 +48,7 @@ class Event(models.Model):
         return self.name
 
 
-class SlidesUser(AbstractUser):
+class User(AbstractUser):
     MALE = 1
     FEMALE = 2
     UNKNOWN = 3
