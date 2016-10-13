@@ -2,7 +2,7 @@ from django.conf.urls import include, url
 
 from rest_framework.routers import DefaultRouter
 
-from api.views import FacebookLogin, GoogleLogin
+from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView
 
 from api import views
 
@@ -19,4 +19,6 @@ urlpatterns = [
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
     url(r'^rest-auth/google/$', GoogleLogin.as_view(), name='fb_login'),
+    url(r'^account-confirm-email/(?P<key>[-:\w]+)/$', RegisterConfirmationView.as_view(),
+        name='account_confirm_email'),
 ]

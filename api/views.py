@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from django.views.generic import TemplateView
 from rest_auth.registration.views import SocialLoginView
 
 from rest_framework.decorators import api_view
@@ -69,3 +70,11 @@ class GoogleLogin(SocialLoginView):
 
 class FacebookLogin(SocialLoginView):
     adapter_class = FacebookOAuth2Adapter
+
+
+class RegisterConfirmationView(TemplateView):
+    template_name = 'registration-confirm-page.html'
+
+    def get_context_data(self, **kwargs):
+        kwargs['key'] = self.kwargs['key']
+        return super().get_context_data(**kwargs)
