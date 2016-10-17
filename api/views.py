@@ -3,14 +3,11 @@ from django.contrib.auth import get_user_model
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
-from rest_auth.app_settings import PasswordResetConfirmSerializer
 from rest_auth.registration.views import SocialLoginView
-from rest_auth.views import PasswordResetConfirmView
 
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework import permissions
 from rest_framework import viewsets
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
