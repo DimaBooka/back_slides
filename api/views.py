@@ -69,7 +69,3 @@ class RegisterConfirmationView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs['key'] = self.kwargs['key']
         return super().get_context_data(**kwargs)
-
-
-class PasswordResetConfirm(TemplateView):
-    template_name = 'password-reset-confirm.html'
