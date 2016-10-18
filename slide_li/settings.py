@@ -144,6 +144,10 @@ REST_FRAMEWORK = {
     'PAGINATE_BY': 10
 }
 
+REST_AUTH_SERIALIZERS = {
+    'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
+}
+
 AUTH_USER_MODEL = 'slides.User'
 
 # Static files (CSS, JavaScript, Images)

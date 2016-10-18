@@ -16,6 +16,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
 class PresentationSerializer(serializers.ModelSerializer):
     creator_info = SimpleUserSerializer(read_only=True, source='creator')
+    creator = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
 
     def validate_creator(self, value):
         request = self.context.get('request')
@@ -54,3 +55,4 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+        exclude = ['password', 'groups', 'user_permissions']
