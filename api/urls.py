@@ -1,7 +1,6 @@
 from django.conf.urls import include, url
 from django.contrib.auth.views import password_reset_confirm, password_reset_complete
 from rest_framework.routers import DefaultRouter
-
 from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView
 
 from api import views
