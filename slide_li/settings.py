@@ -105,12 +105,6 @@ DATABASES = {
     }
 }
 
-if DEBUG:
-    ALLOWED_HOSTS = ['*']
-    CORS_ORIGIN_ALLOW_ALL = True
-    CORS_ALLOW_CREDENTIALS = True
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
@@ -162,6 +156,16 @@ STATICFILES_DIRS = [
 STATIC_ROOT = '.static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+    CORS_ORIGIN_ALLOW_ALL = True
+    CORS_ALLOW_CREDENTIALS = True
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    )
 
 try:
     from .settings_local import *
