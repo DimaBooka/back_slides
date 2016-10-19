@@ -28,7 +28,7 @@ class PresentationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Presentation
-        fields = ('name', 'description', 'slides', 'thumbnail', 'creator', 'creator_info', 'date_created', 'published')
+        fields = ('id', 'name', 'description', 'slides', 'thumbnail', 'creator', 'creator_info', 'date_created', 'published')
         extra_kwargs = {
             'creator': {
                 'required': False,
