@@ -44,6 +44,7 @@ class CommentarySerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
+    presentation = PresentationSerializer()
 
     class Meta:
         model = Event
