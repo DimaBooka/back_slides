@@ -40,7 +40,7 @@ class CommentarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commentary
-        fields = ('author', 'text', 'date_created', 'presentation')
+        fields = ('id', 'author', 'text', 'date_created', 'presentation')
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -48,12 +48,11 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ('name', 'presentation', 'date', 'state')
+        fields = ('id', 'name', 'presentation', 'date', 'state')
 
 
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = '__all__'
         exclude = ['password', 'groups', 'user_permissions']
