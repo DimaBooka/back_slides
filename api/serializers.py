@@ -37,10 +37,11 @@ class PresentationSerializer(serializers.ModelSerializer):
 
 
 class CommentarySerializer(serializers.ModelSerializer):
+    author_info = SimpleUserSerializer(read_only=True, source='author')
 
     class Meta:
         model = Commentary
-        fields = ('id', 'author', 'text', 'date_created', 'presentation')
+        fields = ('id', 'author', 'author_info', 'text', 'date_created', 'presentation')
 
 
 class EventSerializer(serializers.ModelSerializer):
