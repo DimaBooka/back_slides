@@ -4,6 +4,8 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
 from rest_auth.registration.views import SocialLoginView
+from rest_auth.views import PasswordResetView
+from rest_framework import status
 
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework import permissions
@@ -66,3 +68,21 @@ class RegisterConfirmationView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs['key'] = self.kwargs['key']
         return super().get_context_data(**kwargs)
+
+
+class PasswordReset(PasswordResetView):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        if User.objects.filter(email=serializer.validated_data['email']).count() == 0:
+            return Response(
+                {"error": "User with this email does not exist."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            {"success": "Password reset e-mail has been sent."},
+            status=status.HTTP_200_OK
+        )

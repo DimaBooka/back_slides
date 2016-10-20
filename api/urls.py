@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.contrib.auth.views import password_reset_confirm, password_reset_complete
 from rest_framework.routers import DefaultRouter
-from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView
+from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset
 
 from api import views
 
@@ -17,6 +17,8 @@ urlpatterns = [
     url(r'^reset/done/$', password_reset_complete, {'template_name': 'password-reset-done.html'}, name='password_reset_complete'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, {'template_name': 'password-reset-confirm.html'}, name='password_reset_confirm'),
+    url(r'^rest-auth/password/reset/$', PasswordReset.as_view(),
+        name='rest_password_reset'),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
