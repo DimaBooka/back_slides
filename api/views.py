@@ -12,6 +12,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.views import APIView
 
 from api.filters import PresentationFilter, EventFilter, CommentaryFilter, PublishedPresentationFilter
 from api.permissions import IsOwnerOrStaffOrReadOnly
@@ -86,3 +87,11 @@ class PasswordReset(PasswordResetView):
             {"success": "Password reset e-mail has been sent."},
             status=status.HTTP_200_OK
         )
+
+
+class StartEvent(APIView):
+
+    def get(self, request, pk):
+        event = Event.objects.get(id=pk)
+        if event.presentation.creator == request.user:  # запилить permission
+            event.update(status=Event.LIVE)

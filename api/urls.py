@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.contrib.auth.views import password_reset_confirm, password_reset_complete
 from rest_framework.routers import DefaultRouter
-from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset
+from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset, StartEvent
 
 from api import views
 
@@ -26,4 +26,5 @@ urlpatterns = [
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^account-confirm-email/(?P<key>[-:\w]+)/$', RegisterConfirmationView.as_view(),
         name='account_confirm_email'),
+    url(r'^start-event/(?P<pk>\d+)/$', StartEvent.as_view()),
 ]
