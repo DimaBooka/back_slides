@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 
     'slides.apps.SlidesConfig',
     'api.apps.ApiConfig',
+    'chat.apps.ChatConfig',
     'corsheaders',
 ]
 
