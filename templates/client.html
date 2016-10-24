@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <link rel="stylesheet" href="{% static 'reveal.js/css/reveal.css' %}">
+  <link rel="stylesheet" href="{% static 'reveal.js/css/theme/night.css' %}"><div class="reveal">
+    <div class="slides">
+      <section data-markdown="/media/{{slides}}"
+         data-separator="^\n\n\n"
+         data-separator-vertical="^\n\n">
+      </section>
+    </div>
+  </div>
+  <script src="{% static 'reveal.js/js/reveal.js' %}"></script>
+  <script src="{% static 'reveal.js/lib/js/head.min.js' %}"></script>
+  <script src="{% static 'reveal.js/plugin/markdown/marked.js' %}"></script>
+  <script src="{% static 'reveal.js/plugin/markdown/markdown.js' %}"></script>
+  <script src="{% static 'reveal.js/lib/js/classList.js' %}"></script>
+  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+  <script>
+    Reveal.initialize(
+    {
+      embedded: true,
+      controls: false,
+      progress: false,
+      keyboard: false,
+      overview: false,
+      multiplex: {
+        secret: null,
+        id: {{id}},
+        url: 'http://localhost:1948/'
+      }
+    });
+    (function() {
+    	var multiplex = Reveal.getConfig().multiplex;
+    	var socketId = multiplex.id;
+    	var socket = io.connect(multiplex.url);
+
+    	socket.on(multiplex.id, function(data) {
+			// ignore data from sockets that aren't ours
+			if (data.socketId !== socketId) return;
+			if( window.location.host === 'localhost:1947' ) return;
+			Reveal.setState(data.state);
+		});
+    }());
+  </script>
+</body>
+</html>
