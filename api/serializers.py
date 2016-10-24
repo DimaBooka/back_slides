@@ -45,11 +45,20 @@ class CommentarySerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    presentation = PresentationSerializer()
+    presentation_info = PresentationSerializer(read_only=True, source='presentation')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        print(dir(self))
+        request = self.context.get('request')
+        print(self._context)
+        if not isinstance(self.instance, Event) or request and request.user != self.instance.author:
+            print('del secret')
+            del self.fields['secret']
 
     class Meta:
         model = Event
-        fields = ('id', 'name', 'presentation', 'date', 'state')
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -57,3 +66,5 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['password', 'groups', 'user_permissions']
+
+
