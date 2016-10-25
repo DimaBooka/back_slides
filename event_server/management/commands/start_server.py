@@ -13,7 +13,7 @@ class Command(BaseCommand):
         factory.protocol = BroadcastServerProtocol
 
         loop = asyncio.get_event_loop()
-        coro = loop.create_server(factory, '127.0.0.1', 1948)
+        coro = loop.create_server(factory, '0.0.0.0', 1948)
         server = loop.run_until_complete(coro)
 
         try:
