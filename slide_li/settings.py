@@ -164,6 +164,11 @@ STATIC_ROOT = '.static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Socket server settings
+FACTORY_ADRESS = u"ws://127.0.0.1:10000"
+CORO_IP = "0.0.0.0"
+CORO_PORT = "10000"
+
 if DEBUG:
     ALLOWED_HOSTS = ['*']
     CORS_ORIGIN_ALLOW_ALL = True

@@ -1,17 +1,17 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from signal_server.server import BroadcastServerProtocol, BroadcastServerFactory
-
+from slide_li.settings import FACTORY_ADRESS, CORO_IP, CORO_PORT
 class Command(BaseCommand):
     help = "Start's up the signal server"
 
     def handle(self, *args, **options):
         import asyncio
         ServerFactory = BroadcastServerFactory
-        factory = ServerFactory(u"ws://127.0.0.1:10000")
+        factory = ServerFactory(FACTORY_ADRESS)
         factory.protocol = BroadcastServerProtocol
 
         loop = asyncio.get_event_loop()
-        coro = loop.create_server(factory, '0.0.0.0', 10000)
+        coro = loop.create_server(factory, CORO_IP, CORO_PORT)
         server = loop.run_until_complete(coro)
 
         try:
