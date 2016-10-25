@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'chat.apps.ChatConfig',
     'corsheaders',
     'event_server',
+    'signal_server',
 ]
 
 SITE_ID = 1
