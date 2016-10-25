@@ -11,67 +11,194 @@
   <div class="reveal">
     <div class="slides">
       <section data-markdown="/media/{{slides}}"
-         data-separator="^\n\n\n"
-         data-separator-vertical="^\n\n">
-      </section>
-    </div>
+      data-separator="^\n\n\n"
+      data-separator-vertical="^\n\n">
+    </section>
   </div>
-  <script src="{% static 'reveal.js/js/reveal.js' %}"></script>
-  <script src="{% static 'reveal.js/lib/js/head.min.js' %}"></script>
-  <script src="{% static 'reveal.js/plugin/markdown/marked.js' %}"></script>
-  <script src="{% static 'reveal.js/plugin/markdown/markdown.js' %}"></script>
-  <script src="{% static 'reveal.js/lib/js/classList.js' %}"></script>
-  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-  <script>
-    Reveal.initialize(
-    {
-      embedded: true,
-      controls: false,
-      progress: false,
-      keyboard: false,
-      overview: false,
-      multiplex: {
-        secret: null,
-        id: {{id}},
-        url: 'http://localhost:1948/'
+</div>
+<audio id="theirs" autoplay></audio>
+<script src="{% static 'reveal.js/js/reveal.js' %}"></script>
+<script src="{% static 'reveal.js/lib/js/head.min.js' %}"></script>
+<script src="{% static 'reveal.js/plugin/markdown/marked.js' %}"></script>
+<script src="{% static 'reveal.js/plugin/markdown/markdown.js' %}"></script>
+<script src="{% static 'reveal.js/lib/js/classList.js' %}"></script>
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script>
+  Reveal.initialize(
+  {
+    embedded: true,
+    controls: false,
+    progress: false,
+    keyboard: false,
+    overview: false,
+    multiplex: {
+      secret: null,
+      id: {{id}},
+      url: 'http://localhost:1948/'
+    }
+  });
+  var socket = null;
+  var isopen = false;
+  window.onload = function() {
+    socket = new WebSocket("ws://127.0.0.1:1948");
+    socket.onopen = function() {
+     console.log("Connected!");
+     isopen = true;
+   }
+   var multiplex = Reveal.getConfig().multiplex;
+   var socketId = multiplex.id;
+   socket.onmessage = function(e) {
+    data = JSON.parse(e.data);
+    console.log(data.socketId);
+    console.log(socketId);
+    if (data.socketId != socketId) return;
+    if( window.location.host === 'localhost:1947' ) return;
+    Reveal.setState(data.state);
+  }
+  socket.onclose = function(e) {
+   console.log("Connection closed.");
+   socket = null;
+   isopen = false;
+ }
+};
+var name;
+var connection = new WebSocket('ws://172.16.202.14:10000');
+connection.onopen = function() {
+  console.log("Connected");
+  connection.send(JSON.stringify({
+    register: true,
+    subscriber: true,
+  }));
+  startConnection();
+  startPeerConnection('{{id}}');
+  };
+
+// Handle all messages through this callback
+connection.onmessage = function(message) {
+  console.log("Got message", message.data);
+  var data = JSON.parse(message.data);
+  switch (data.type) {
+    case "offer":
+    onOffer(data.offer, data.uuid);
+    break;
+    case "answer":
+    onAnswer(data.answer);
+    break;
+    case "candidate":
+    onCandidate(data.candidate);
+    break;
+    case "leave":
+    onLeave();
+    break;
+    default:
+    break;
+  }
+};
+
+connection.onerror = function(err) {
+  console.log("Got error", err);
+};
+
+function send(message) {
+  console.log('Function send, yourConnection:', yourConnection)
+  console.log('Function send, connectedUser:', connectedUser);
+  if (connectedUser) {
+    message.uuid = connectedUser;
+  }
+  console.log(message)
+  connection.send(JSON.stringify(message));
+};
+
+var theirAudio = document.querySelector('#theirs'),
+yourConnection, connectedUser, stream;
+
+function startConnection() {
+  if (hasRTCPeerConnection()) {
+    setupPeerConnection();
+  };
+}
+
+function setupPeerConnection() {
+  var configuration = {
+    "iceServers": [{
+      "url": "stun:stun.1.google.com:19302"
+    }]
+  };
+  yourConnection = new RTCPeerConnection(configuration);
+    // Setup stream listening
+    yourConnection.onaddstream = function(e) {
+      theirAudio.src = window.URL.createObjectURL(e.stream);
+    };
+    // Setup ice handling
+    yourConnection.onicecandidate = function(event) {
+      if (event.candidate) {
+        send({
+          type: "candidate",
+          candidate: event.candidate
+        });
       }
+    };
+  }
+
+  function hasUserMedia() {
+    navigator.getUserMedia = navigator.getUserMedia ||
+    navigator.webkitGetUserMedia || navigator.mozGetUserMedia ||
+    navigator.msGetUserMedia;
+    return !!navigator.getUserMedia;
+  }
+
+  function hasRTCPeerConnection() {
+    window.RTCPeerConnection = window.RTCPeerConnection ||
+    window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+    window.RTCSessionDescription = window.RTCSessionDescription ||
+    window.webkitRTCSessionDescription ||
+    window.mozRTCSessionDescription;
+    window.RTCIceCandidate = window.RTCIceCandidate ||
+    window.webkitRTCIceCandidate || window.mozRTCIceCandidate;
+    return !!window.RTCPeerConnection;
+  }
+
+
+  function startPeerConnection(user) {
+    connectedUser = user;
+    console.log('start peer user: ', user);
+    var options = {
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true
+    };
+    yourConnection.createOffer(function(offer) {
+      console.log(offer);
+      send({
+        type: "offer",
+        offer: offer
+      });
+      yourConnection.setLocalDescription(offer);
+    }, function(error) {
+      alert("An error has occurred.");
+    }, options);
+  };
+
+  function onOffer(offer, uuid) {
+    connectedUser = uuid;
+    yourConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    yourConnection.createAnswer(function(answer) {
+      yourConnection.setLocalDescription(answer);
+      send({
+        type: "answer",
+        answer: answer
+      });
+    }, function(error) {
+      alert("An error has occurred");
     });
-    //(function() {
-    //	var multiplex = Reveal.getConfig().multiplex;
-    //	var socketId = multiplex.id;
-    //	//var socket = io.connect(multiplex.url);
-//
-    //	socket.on(multiplex.id, function(data) {
-	//		// ignore data from sockets that aren't ours
-	//		if (data.socketId !== socketId) return;
-	//		if( window.location.host === 'localhost:1947' ) return;
-	//		Reveal.setState(data.state);
-	//	});
-    //}());
-     var socket = null;
-     var isopen = false;
-     window.onload = function() {
-        socket = new WebSocket("ws://127.0.0.1:1948");
-        socket.onopen = function() {
-           console.log("Connected!");
-           isopen = true;
-        }
-        var multiplex = Reveal.getConfig().multiplex;
-        var socketId = multiplex.id;
-        socket.onmessage = function(e) {
-          data = JSON.parse(e.data);
-          console.log(data.socketId);
-          console.log(socketId);
-          if (data.socketId != socketId) return;
-		  if( window.location.host === 'localhost:1947' ) return;
-			Reveal.setState(data.state);
-        }
-        socket.onclose = function(e) {
-           console.log("Connection closed.");
-           socket = null;
-           isopen = false;
-        }
-     };
-  </script>
+  };
+
+  function onAnswer(answer) {
+    yourConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  };
+
+  function onCandidate(candidate) {
+    yourConnection.addIceCandidate(new RTCIceCandidate(candidate));
+  };
+</script>
 </body>
 </html>
