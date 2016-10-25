@@ -7,7 +7,8 @@
 </head>
 <body>
   <link rel="stylesheet" href="{% static 'reveal.js/css/reveal.css' %}">
-  <link rel="stylesheet" href="{% static 'reveal.js/css/theme/night.css' %}"><div class="reveal">
+  <link rel="stylesheet" href="{% static 'reveal.js/css/theme/night.css' %}">
+  <div class="reveal">
     <div class="slides">
       <section data-markdown="/media/{{slides}}"
          data-separator="^\n\n\n"
@@ -35,18 +36,42 @@
         url: 'http://localhost:1948/'
       }
     });
-    (function() {
-    	var multiplex = Reveal.getConfig().multiplex;
-    	var socketId = multiplex.id;
-    	var socket = io.connect(multiplex.url);
-
-    	socket.on(multiplex.id, function(data) {
-			// ignore data from sockets that aren't ours
-			if (data.socketId !== socketId) return;
-			if( window.location.host === 'localhost:1947' ) return;
+    //(function() {
+    //	var multiplex = Reveal.getConfig().multiplex;
+    //	var socketId = multiplex.id;
+    //	//var socket = io.connect(multiplex.url);
+//
+    //	socket.on(multiplex.id, function(data) {
+	//		// ignore data from sockets that aren't ours
+	//		if (data.socketId !== socketId) return;
+	//		if( window.location.host === 'localhost:1947' ) return;
+	//		Reveal.setState(data.state);
+	//	});
+    //}());
+     var socket = null;
+     var isopen = false;
+     window.onload = function() {
+        socket = new WebSocket("ws://127.0.0.1:1948");
+        socket.onopen = function() {
+           console.log("Connected!");
+           isopen = true;
+        }
+        var multiplex = Reveal.getConfig().multiplex;
+        var socketId = multiplex.id;
+        socket.onmessage = function(e) {
+          data = JSON.parse(e.data);
+          console.log(data.socketId);
+          console.log(socketId);
+          if (data.socketId != socketId) return;
+		  if( window.location.host === 'localhost:1947' ) return;
 			Reveal.setState(data.state);
-		});
-    }());
+        }
+        socket.onclose = function(e) {
+           console.log("Connection closed.");
+           socket = null;
+           isopen = false;
+        }
+     };
   </script>
 </body>
 </html>
