@@ -21,13 +21,29 @@
             socket.onopen = function() {
                console.log("Connected!");
                isopen = true;
+               var date = new Date();
+               $('#today').append(date);
+               socket.send('{{ token }}');
             };
-
+            var date = new Date();
             socket.onmessage = function(e) {
-               if (e.data['message']) {
+               var date = new Date();
+               var time = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+               if (JSON.parse(e.data)['message']) {
                    var data = JSON.parse(e.data);
                   console.log("Text message received: " + data['message']);
-                  $('#mymessage').append('<p>' + data['user'] + ": " + data['message'] + '</p>');
+                  $('#mymessage').append('<div class="row">\
+                                            <div class="col-lg-12">\
+                                                <div class="media">\
+                                                    <div class="media-body">\
+                                                        <h4 class="media-heading">' + data["user"] + '\
+                                                            <span class="small pull-right">' + time + '</span>\
+                                                        </h4>\
+                                                        <p>' + data["message"] + '</p>\
+                                                    </div>\
+                                                </div>\
+                                            </div>\
+                                        </div><hr>');
                }
                else {
                    console.log(e.data)
@@ -46,18 +62,7 @@
             if (isopen) {
                socket.send(JSON.stringify(data));
                console.log("Text message sent.");
-            } else {
-               console.log("Connection not opened.")
-            }
-         }
-
-         function sendBinary() {
-            if (isopen) {
-               var buf = new ArrayBuffer(32);
-               var arr = new Uint8Array(buf);
-               for (i = 0; i < arr.length; ++i) arr[i] = i;
-               socket.send(buf);
-               console.log("Binary message sent.");
+               $('.message-text').val('')
             } else {
                console.log("Connection not opened.")
             }
@@ -65,62 +70,46 @@
       </script>
    </head>
    <body>
-       <div class="container">
-        <div class="row">
-            <div class="col-md-5">
-                <div class="panel panel-primary">
-                    <div class="panel-heading" id="accordion">
-                        <span class="glyphicon glyphicon-comment"></span> Chat
-                        <div class="btn-group pull-right">
-                            <a type="button" class="btn btn-default btn-xs" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                                <span class="glyphicon glyphicon-chevron-down"></span>
-                            </a>
-                        </div>
+   <div class="container bootstrap snippet">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+            <div class="portlet portlet-default">
+                <div class="portlet-heading">
+                    <div class="portlet-title">
+                        <h4><i class="fa fa-circle text-green"></i> Chat</h4>
                     </div>
-                <div class="panel-collapse body" id="collapseOne">
-                    <div class="panel-body">
-                        <ul class="chat">
-                            <li class="left clearfix"><span class="chat-img pull-left">
-                                <img src="http://placehold.it/50/55C1E7/fff&text=U" alt="User Avatar" class="img-circle" />
-                            </span>
-                                <div class="chat-body clearfix">
-                                    <div class="header">
-                                        <strong class="primary-font">User 1</strong> <small class="pull-right text-muted">
-                                            <span class="glyphicon glyphicon-time"></span>Time 1</small>
-                                    </div>
-                                    <p>
-                                        Text 1
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="right clearfix"><span class="chat-img pull-right">
-                                <img src="http://placehold.it/50/FA6F57/fff&text=ME" alt="User Avatar" class="img-circle" />
-                            </span>
-                                <div class="chat-body clearfix">
-                                    <div class="header">
-                                        <small class=" text-muted"><span class="glyphicon glyphicon-time"></span>Time 2</small>
-                                        <strong class="pull-right primary-font">User 2</strong>
-                                    </div>
-                                    <div id="mymessage">
-
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
+                    <div class="portlet-widgets">
+                        <span class="divider"></span>
+                        <a data-toggle="collapse" data-parent="#accordion" href="#chat"><i class="fa fa-chevron-down"></i></a>
                     </div>
-                    <div class="panel-footer">
-                        <div class="input-group">
-                            <input id="btn-input" type="text" class="form-control input-sm message-text" placeholder="Type your message here..." />
-                            <span class="input-group-btn">
-                                <button onclick="sendText($('.message-text').val())" class="btn btn-warning btn-sm" id="btn-chat">
-                                    Send</button>
-                            </span>
-                        </div>
-                    </div>
+                    <div class="clearfix"></div>
                 </div>
+                <div id="chat" class="panel-collapse collapse in">
+                    <div>
+                    <div id="mymessage" class="portlet-body chat-widget" style="overflow-y: auto; width: auto; height: 300px;">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <p id="today" class="text-center text-muted small"></p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="portlet-footer">
+                        <form role="form">
+                            <div class="form-group">
+                                <textarea class="form-control message-text" placeholder="Enter message..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-default pull-right" onclick="sendText($('.message-text').val())">Send</button>
+                                <div class="clearfix"></div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
+        <!-- /.col-md-4 -->
     </div>
+</div>
    </body>
 </html>

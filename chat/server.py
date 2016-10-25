@@ -15,6 +15,7 @@ User = get_user_model()
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
     room = ''
+    token = ''
 
     def onOpen(self):
         uuid = uuid4().hex
@@ -32,9 +33,9 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 uuid = data.get('uuid', '')
                 if uuid:
                     self.uuid = uuid
-            except (json.JSONDecodeError, UnicodeDecodeError) as err:
-                print(err)
-
+            except:
+                self.token = payload.decode('utf-8')
+                return
         broadcast = self.actions['broadcast']
         broadcast(self, payload)
         print("Some message received")
@@ -68,9 +69,9 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.clients.pop(uuid)
 
     def broadcast(self, conn, data):
-        token = conn.http_headers.get('Authorization', '')
+        token = conn.http_headers.get('Authorization', conn.token)
         try:
-            token = token.split(' ')[1]
+            # token = token.split(' ')[1]
             user = Token.objects.select_related('user').get(key=token).user
         except:
             conn.sendMessage(bytes(json.dumps({'error': 'Missing or incorrect token'}), encoding='utf-8'))
