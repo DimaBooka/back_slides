@@ -6,9 +6,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol, \
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
     def onOpen(self):
-        self.uuid = uuid4().hex
-        self.factory.register(self, self.uuid)
-        self.factory.send_message(self, {'initial_uuid': self.uuid})  # for debug
+        print('New connection')
         self.actions = {
             'offer': self.factory.offer,
             'answer': self.factory.answer,
@@ -24,10 +22,19 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 print(err)
                 data = {}
 
-        type = data['type']
-        action = self.actions[type]
-        action(data, self.uuid)
-        print("Some message received")
+        if data.get('register', ''):
+            hostname = data.get('hostname', '')
+            if hostname:
+                self.uuid = hostname
+            else:
+                self.uuid = uuid4().hex
+            self.factory.register(self, self.uuid)
+            self.factory.send_message(self, {'initial_uuid': self.uuid})
+        else:
+            type = data['type']
+            action = self.actions[type]
+            action(data, self.uuid)
+            print("Some message received")
 
     def connectionLost(self, reason):
         WebSocketServerProtocol.connectionLost(self, reason)
@@ -102,40 +109,3 @@ class BroadcastServerFactory(WebSocketServerFactory):
         print("sending message '{}' ..".format(message))
         conn.sendMessage(json.dumps(message).encode('utf-8'))
         print("message sent to {}".format(conn.peer))
-
-
-# class BroadcastPreparedServerFactory(BroadcastServerFactory):
-#
-#     """
-#     Functionally same as above, but optimized broadcast using
-#     prepareMessage and sendPreparedMessage.
-#     """
-#
-#     def broadcast(self, msg):
-#         print("broadcasting prepared message '{}' ..".format(msg))
-#         preparedMsg = self.prepareMessage(msg)
-#         for c in self.clients:
-#             c.sendPreparedMessage(preparedMsg)
-#             print("prepared message sent to {}".format(c.peer))
-
-
-if __name__ == '__main__':
-    import asyncio
-
-    ServerFactory = BroadcastServerFactory
-    # ServerFactory = BroadcastPreparedServerFactory
-
-    factory = ServerFactory(u"ws://127.0.0.1:10000")
-    factory.protocol = BroadcastServerProtocol
-
-    loop = asyncio.get_event_loop()
-    coro = loop.create_server(factory, '0.0.0.0', 10000)
-    server = loop.run_until_complete(coro)
-
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.close()
-        loop.close()
