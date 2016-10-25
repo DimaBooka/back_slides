@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'chat.apps.ChatConfig',
     'corsheaders',
+    'event_server',
 ]
 
 SITE_ID = 1
