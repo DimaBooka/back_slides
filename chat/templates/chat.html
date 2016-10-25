@@ -24,10 +24,13 @@
             };
 
             socket.onmessage = function(e) {
-               if (e.data) {
+               if (e.data['message']) {
                    var data = JSON.parse(e.data);
                   console.log("Text message received: " + data['message']);
                   $('#mymessage').append('<p>' + data['user'] + ": " + data['message'] + '</p>');
+               }
+               else {
+                   console.log(e.data)
                }
             };
 

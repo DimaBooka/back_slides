@@ -69,10 +69,13 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
     def broadcast(self, conn, data):
         token = conn.http_headers.get('Authorization', '')
-        if not token:
+        try:
+            token = token.split(' ')[1]
+            user = Token.objects.select_related('user').get(key=token).user
+        except:
+            conn.sendMessage(bytes(json.dumps({'error': 'Missing or incorrect token'}), encoding='utf-8'))
+            conn.dropConnection()
             return
-        token = token.split(' ')[1]
-        user = Token.objects.select_related('user').get(key=token).user
         data_dict = json.loads(data.decode('utf-8'))
         message = json.dumps({'message': data_dict['text'], 'user': user.username})
         current_room = data_dict['room']
