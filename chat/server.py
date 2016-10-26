@@ -1,12 +1,10 @@
 import json
 from uuid import uuid4
 
-import django
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from django.contrib.auth import get_user_model
 
-django.setup()
 
 from rest_framework.authtoken.models import Token
 

@@ -164,10 +164,25 @@ STATIC_ROOT = '.static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Socket server settings
-FACTORY_ADRESS = u"ws://127.0.0.1:10000"
-CORO_IP = "0.0.0.0"
-CORO_PORT = "10000"
+#Socket servers adress
+RTC_SOCKET_ADDR = "127.0.0.1:10000"
+RVL_SOCKET_ADDR = "127.0.0.1:10001"
+CHT_SOCKET_ADDR = "127.0.0.1:10002"
+
+# WebRTC signal server settings
+RTC_FACTORY_ADRESS = u"ws://127.0.0.1:10000"
+RTC_CORO_IP = "0.0.0.0"
+RTC_CORO_PORT = 10000
+
+# Reveal socket server settings
+RVL_FACTORY_ADRESS = u"ws://127.0.0.1:10001"
+RVL_CORO_IP = "0.0.0.0"
+RVL_CORO_PORT = 10001
+
+# Chat socket server settings
+CHT_FACTORY_ADRESS = u"ws://127.0.0.1:10002"
+CHT_CORO_IP = "0.0.0.0"
+CHT_CORO_PORT = 10002
 
 if DEBUG:
     ALLOWED_HOSTS = ['*']

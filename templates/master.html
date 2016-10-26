@@ -31,7 +31,7 @@
     multiplex: {
       secret: '{{ secret }}',
       id: {{ id }},
-      url: 'http://localhost:1948/'
+      url: 'http://{{rvl_socket_addr}}/'
     }
   });
 
@@ -57,7 +57,7 @@
   var socket = null;
   var isopen = false;
   window.onload = function() {
-    socket = new WebSocket("ws://127.0.0.1:1948");
+    socket = new WebSocket("ws://{{rvl_socket_addr}}");
     socket.onopen = function() {
      console.log("Connected!");
      isopen = true;
@@ -68,7 +68,7 @@
      isopen = false;
    }
  };
- var connection = new WebSocket('ws://172.16.202.14:10000'),
+ var connection = new WebSocket('ws://{{rtc_socket_addr}}'),
  name = "",
  peerConnections = {};
 

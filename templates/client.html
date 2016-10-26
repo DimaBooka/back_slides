@@ -34,13 +34,13 @@
     multiplex: {
       secret: null,
       id: {{id}},
-      url: 'http://localhost:1948/'
+      url: 'http://{{rvl_socket_addr}}/'
     }
   });
   var socket = null;
   var isopen = false;
   window.onload = function() {
-    socket = new WebSocket("ws://127.0.0.1:1948");
+    socket = new WebSocket("ws://{{rvl_socket_addr}}");
     socket.onopen = function() {
      console.log("Connected!");
      isopen = true;
@@ -52,7 +52,7 @@
     console.log(data.socketId);
     console.log(socketId);
     if (data.socketId != socketId) return;
-    if( window.location.host === 'localhost:1947' ) return;
+    if( window.location.host === '{{rvl_socket_addr}}' ) return;
     Reveal.setState(data.state);
   }
   socket.onclose = function(e) {
@@ -62,7 +62,7 @@
  }
 };
 var name;
-var connection = new WebSocket('ws://172.16.202.14:10000');
+var connection = new WebSocket('ws://{{rtc_socket_addr}}');
 connection.onopen = function() {
   console.log("Connected");
   connection.send(JSON.stringify({

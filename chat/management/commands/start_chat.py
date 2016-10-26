@@ -1,19 +1,21 @@
+import django
 from django.core.management.base import BaseCommand
-from signal_server.server import BroadcastServerProtocol, BroadcastServerFactory
-from slide_li.settings import RTC_FACTORY_ADRESS, RTC_CORO_IP, RTC_CORO_PORT
+from chat.server import BroadcastServerFactory, BroadcastServerProtocol
+from slide_li.settings import CHT_FACTORY_ADRESS, CHT_CORO_IP, CHT_CORO_PORT
 
 
 class Command(BaseCommand):
-    help = "Start's up the signal server"
+    help = 'Start websocket server for chat'
 
     def handle(self, *args, **options):
         import asyncio
         ServerFactory = BroadcastServerFactory
-        factory = ServerFactory(RTC_FACTORY_ADRESS)
+
+        factory = ServerFactory(CHT_FACTORY_ADRESS)
         factory.protocol = BroadcastServerProtocol
 
         loop = asyncio.get_event_loop()
-        coro = loop.create_server(factory, RTC_CORO_IP, RTC_CORO_PORT)
+        coro = loop.create_server(factory, CHT_CORO_IP, CHT_CORO_PORT)
         server = loop.run_until_complete(coro)
 
         try:

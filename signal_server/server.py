@@ -36,8 +36,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             action(data, self.uuid)
             print("Some message received")
 
-    def connectionLost(self, reason):
-        WebSocketServerProtocol.connectionLost(self, reason)
+    def onClose(self, wasClean, code, reason):
         self.factory.unregister(self.uuid)
 
 
