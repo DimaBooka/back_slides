@@ -1,14 +1,17 @@
 import json
 from uuid import uuid4
 
+import redis
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from django.contrib.auth import get_user_model
 
-
 from rest_framework.authtoken.models import Token
 
+from slide_li import settings
+
 User = get_user_model()
+redis_con = redis.from_url(settings.REDIS_CON)
 
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
@@ -24,16 +27,10 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         }
 
     def onMessage(self, payload, isBinary):
-
-        if not isBinary:
-            try:
-                data = json.loads(payload.decode('utf8'))
-                uuid = data.get('uuid', '')
-                if uuid:
-                    self.uuid = uuid
-            except:
-                self.token = payload.decode('utf-8')
-                return
+        data = json.loads(payload.decode('utf-8'))
+        if data.get('room', '') and data.get('token', ''):
+            self.room = data['room']
+            self.token = data['token']
         broadcast = self.actions['broadcast']
         broadcast(self, payload)
         print("Some message received")
@@ -44,11 +41,12 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
 
 class BroadcastServerFactory(WebSocketServerFactory):
+    rooms = {}
+    chat_history = {}
 
     def __init__(self, url):
         WebSocketServerFactory.__init__(self, url)
         self.clients = {}
-        self.rooms = {}
 
     def leave(self, data):
         uuid = data['uuid']
@@ -68,41 +66,32 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
     def broadcast(self, conn, data):
         token = conn.http_headers.get('Authorization', conn.token)
+
         try:
             # token = token.split(' ')[1]
             user = Token.objects.select_related('user').get(key=token).user
         except:
             conn.sendMessage(bytes(json.dumps({'error': 'Missing or incorrect token'}), encoding='utf-8'))
-            conn.dropConnection()
-            return
+            user = False
         data_dict = json.loads(data.decode('utf-8'))
-        message = json.dumps({'message': data_dict['text'], 'user': user.username})
+
+        if data_dict.get('text', '') and user:
+            message = json.dumps({'message': data_dict['text'], 'user': user.username})
+        else:
+            message = False
         current_room = data_dict['room']
+
         if not data_dict['room'] in self.rooms.keys():
             self.rooms.update({current_room: [conn]})
         elif conn not in self.rooms[current_room]:
             self.rooms[current_room].append(conn)
-        print("broadcasting message '{}' ..".format(message))
-        for client in self.rooms[current_room]:
-            client.sendMessage(bytes(message, encoding='utf-8'))
-
-
-if __name__ == '__main__':
-    import asyncio
-
-    ServerFactory = BroadcastServerFactory
-
-    factory = ServerFactory(u"ws://127.0.0.1:9000")
-    factory.protocol = BroadcastServerProtocol
-
-    loop = asyncio.get_event_loop()
-    coro = loop.create_server(factory, '0.0.0.0', 9000)
-    server = loop.run_until_complete(coro)
-
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.close()
-        loop.close()
+            messages = [
+                json.loads(msg.decode('utf-8'))
+                for msg in redis_con.lrange(current_room, 0, -1)
+            ]
+            conn.sendMessage(json.dumps({'messages': messages}).encode('utf-8'))
+        if message:
+            for client in self.rooms[current_room]:
+                client.sendMessage(bytes(message, encoding='utf-8'))
+            redis_con.rpush(current_room, message)
+            redis_con.expire(current_room, 7200)

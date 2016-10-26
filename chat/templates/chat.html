@@ -22,14 +22,14 @@
                console.log("Connected!");
                isopen = true;
                var date = new Date();
-               $('#today').append(date);
-               socket.send('{{ token }}');
+               $('#today').append(date.toDateString());
+               socket.send(JSON.stringify({'token': "{{ token }}", 'room': window.location.pathname}));
             };
             var date = new Date();
             socket.onmessage = function(e) {
                var date = new Date();
                var time = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-               if (JSON.parse(e.data)['message']) {
+               if (!!e.data && JSON.parse(e.data)['message']) {
                    var data = JSON.parse(e.data);
                   console.log("Text message received: " + data['message']);
                   $('#mymessage').append('<div class="row">\
@@ -45,8 +45,25 @@
                                             </div>\
                                         </div><hr>');
                }
+               else if (JSON.parse(e.data)['messages']) {
+                   var messages = JSON.parse(e.data)['messages'];
+                   for (var i = 0; i < messages.length; i++) {
+                       $('#mymessage').append('<div class="row">\
+                                            <div class="col-lg-12">\
+                                                <div class="media">\
+                                                    <div class="media-body">\
+                                                        <h4 class="media-heading">' + messages[i]["user"] + '\
+                                                            <span class="small pull-right">' + time + '</span>\
+                                                        </h4>\
+                                                        <p>' + messages[i]["message"] + '</p>\
+                                                    </div>\
+                                                </div>\
+                                            </div>\
+                                        </div><hr>');
+                   }
+               }
                else {
-                   console.log(e.data)
+                    console.log('No message ' + e.data)
                }
             };
 

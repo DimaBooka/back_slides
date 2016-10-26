@@ -1,4 +1,3 @@
-import django
 from django.core.management.base import BaseCommand
 from chat.server import BroadcastServerFactory, BroadcastServerProtocol
 from slide_li.settings import CHT_FACTORY_ADRESS, CHT_CORO_IP, CHT_CORO_PORT

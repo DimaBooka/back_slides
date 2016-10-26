@@ -197,3 +197,5 @@ try:
     from .settings_local import *
 except ImportError:
     pass
+
+REDIS_CON = 'redis://localhost:6379/0'
