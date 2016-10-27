@@ -166,8 +166,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #Socket servers adress
 RTC_SOCKET_ADDR = "127.0.0.1:10000"
-RVL_SOCKET_ADDR = "127.0.0.1:10001"
-CHT_SOCKET_ADDR = "127.0.0.1:10002"
+RVL_SOCKET_ADDR = "127.0.0.1:10000"
+CHT_SOCKET_ADDR = "127.0.0.1:10000"
 
 # WebRTC signal server settings
 RTC_FACTORY_ADRESS = u"ws://127.0.0.1:10000"

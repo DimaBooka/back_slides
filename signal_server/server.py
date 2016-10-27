@@ -30,6 +30,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         }
 
     def onMessage(self, payload, isBinary):
+        print(payload)
         data = json.loads(payload.decode('utf8'))
         action = data.get('from', '')
         if action:
@@ -143,7 +144,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.clients[uuid] = client
         print(self.clients)
 
-    def register_rev(self, client):
+    def rev_register(self, client):
         if client not in self.rev_clients:
             self.rev_clients.append(client)
 

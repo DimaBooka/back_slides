@@ -60,12 +60,12 @@
   window.onload = function() {
     socket = new WebSocket("ws://{{rvl_socket_addr}}");
     socket.onopen = function() {
-     socket.send({'from': 'reveal', 'register': true}
+     socket.send(JSON.stringify({'from': 'reveal', 'register': true}));
      console.log("Connected!");
      isopen = true;
    }
    socket.onclose = function(e) {
-     console.log("Connection closed.");
+     console.log("RVL Connection closed.", e);
      socket = null;
      isopen = false;
    }
