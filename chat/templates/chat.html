@@ -53,7 +53,7 @@
                                                 <div class="media">\
                                                     <div class="media-body">\
                                                         <h4 class="media-heading">' + messages[i]["user"] + '\
-                                                            <span class="small pull-right">' + time + '</span>\
+                                                            <span class="small pull-right">' + messages[i]["datetime"] + '</span>\
                                                         </h4>\
                                                         <p>' + messages[i]["message"] + '</p>\
                                                     </div>\
@@ -75,7 +75,9 @@
          };
 
          function sendText(text) {
-            var data = {'text': text, 'room': window.location.pathname};
+            var date = new Date();
+            var time = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+            var data = {'text': text, 'room': window.location.pathname, 'datetime': time};
             if (isopen) {
                socket.send(JSON.stringify(data));
                console.log("Text message sent.");
