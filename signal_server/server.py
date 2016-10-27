@@ -4,12 +4,17 @@ from uuid import uuid4
 from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
+
 from slide_li import settings
 
 User = get_user_model()
 redis_con = redis.from_url(settings.REDIS_CON)
 
 class BroadcastServerProtocol(WebSocketServerProtocol):
+    room = ''
+    token = ''
+
     def onOpen(self):
         print('New connection')
         self.actions = {
@@ -22,7 +27,6 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             'chat': self.chat_process_payload,
             'signal': self.signal_process_payload,
         }
-        self.registered_in_chat = False
 
     def onMessage(self, payload, isBinary):
         data = json.loads(payload.decode('utf8'))
@@ -53,39 +57,21 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
     def chat_process_payload(self, payload):
         data = json.loads(payload.decode('utf-8'))
-        self.token = self.http_headers.get('authorization', '').split(' ')[1]
-        if data.get('action', '') == 'history':
-            self.send_history(data['room'])
-            return
-        if not self.token:
-            self.sendMessage(json.dumps({'error': 'Not logged in'}).encode('utf-8'))
-            return
-
-        if data.get('action', '') == 'register':
+        if data.get('room', '') and data.get('token', ''):
             self.room = data['room']
-            self.factory.register_chat_user(self)
-            self.registered_in_chat = True
-        else:
-            if hasattr(self, 'user'):
-                self.factory.broadcast_chat_message(self, data)
+            self.token = data['token']
+        self.factory.broadcast_chat_message(self, payload)
         print("Some message received")
 
-
-    def send_history(self, room):
-        messages = [
-            json.loads(msg.decode('utf-8'))
-            for msg in redis_con.lrange(room, 0, -1)
-            ]
-        self.sendMessage(json.dumps({'messages': messages}).encode('utf-8'))
-
-
     def onClose(self, wasClean, code, reason):
-        self.factory.unregister(self.uuid)
+        if hasattr(self, 'uuid'):
+            self.factory.unregister(self.uuid)
 
 
 
 class BroadcastServerFactory(WebSocketServerFactory):
     rooms = {}
+    chat_history = {}
     clients = {}
 
     def __init__(self, url):
@@ -153,26 +139,35 @@ class BroadcastServerFactory(WebSocketServerFactory):
         conn.sendMessage(json.dumps(message).encode('utf-8'))
         print("message sent to {}".format(conn.peer))
 
-    def register_chat_user(self, conn):
-        if conn.room not in self.rooms:
-            self.rooms[conn.room] = {}
-        try:
-            user = User.objects.get(auth_token__key=conn.token)
-        except:
-            conn.sendMessage(json.dumps({'error': 'Missing or incorrect token'}).encode('utf-8'))
-            user = None
-        print(user)
-        if user:
-            conn.user = user.username
-            if conn.token not in self.rooms[conn.room]:
-                self.rooms[conn.room][conn.token] = conn
-
-    def unregister_chat_user(self, conn):
-        self.rooms[conn.room].pop(conn.token)
 
     def broadcast_chat_message(self, conn, data):
-        message = json.dumps({'message': data['text'], 'user': conn.user, 'datetime': data['datetime']})
-        for connect in self.rooms[conn.room].values():
-            connect.sendMessage(message.encode('utf-8'))
-        redis_con.rpush(conn.room, message)
-        redis_con.expire(conn.room, 7200)
+        token = conn.http_headers.get('Authorization', conn.token)
+
+        try:
+            # token = token.split(' ')[1]
+            user = Token.objects.select_related('user').get(key=token).user
+        except:
+            conn.sendMessage(bytes(json.dumps({'error': 'Missing or incorrect token'}), encoding='utf-8'))
+            user = False
+        data_dict = json.loads(data.decode('utf-8'))
+
+        if data_dict.get('text', '') and user:
+            message = json.dumps({'message': data_dict['text'], 'user': user.username, 'datetime': data_dict['datetime']})
+        else:
+            message = False
+        current_room = data_dict['room']
+
+        if not data_dict['room'] in self.rooms.keys():
+            self.rooms.update({current_room: [conn]})
+        elif conn not in self.rooms[current_room]:
+            self.rooms[current_room].append(conn)
+            messages = [
+                json.loads(msg.decode('utf-8'))
+                for msg in redis_con.lrange(current_room, 0, -1)
+            ]
+            conn.sendMessage(json.dumps({'messages': messages}).encode('utf-8'))
+        if message:
+            for client in self.rooms[current_room]:
+                client.sendMessage(bytes(message, encoding='utf-8'))
+            redis_con.rpush(current_room, message)
+            redis_con.expire(current_room, 7200)

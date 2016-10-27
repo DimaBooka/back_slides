@@ -1,3 +1,5 @@
+
+
 {% load static %}
 <!DOCTYPE html>
 <html>
@@ -23,14 +25,12 @@
                isopen = true;
                var date = new Date();
                $('#today').append(date.toDateString());
-               socket.send(JSON.stringify({'room': window.location.pathname, 'from': 'chat', 'action': 'history'}));
-               socket.send(JSON.stringify({'room': window.location.pathname, 'from': 'chat', 'action': 'register'}));
+               socket.send(JSON.stringify({'token': "{{ token }}", 'room': window.location.pathname, 'from': 'chat'}));
             };
             var date = new Date();
             socket.onmessage = function(e) {
                var date = new Date();
                var time = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-               console.log(e.data);
                if (!!e.data && JSON.parse(e.data)['message']) {
                    var data = JSON.parse(e.data);
                   console.log("Text message received: " + data['message']);
@@ -55,7 +55,7 @@
                                                 <div class="media">\
                                                     <div class="media-body">\
                                                         <h4 class="media-heading">' + messages[i]["user"] + '\
-                                                            <span class="small pull-right">' + time + '</span>\
+                                                            <span class="small pull-right">' + messages[i]["datetime"] + '</span>\
                                                         </h4>\
                                                         <p>' + messages[i]["message"] + '</p>\
                                                     </div>\
@@ -79,7 +79,7 @@
          function sendText(text) {
             var date = new Date();
             var time = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-            var data = {'text': text, 'room': window.location.pathname, 'from': 'chat', 'datetime': time};
+            var data = {'text': text, 'room': window.location.pathname, 'datetime': time, 'from': 'chat'};
             if (isopen) {
                socket.send(JSON.stringify(data));
                console.log("Text message sent.");
@@ -134,3 +134,4 @@
 </div>
    </body>
 </html>
+
