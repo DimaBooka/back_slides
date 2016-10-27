@@ -68,6 +68,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
     def reveal_process_payload(self, payload):
         try:
             data = json.loads(payload.decode('utf8'))
+            print('reveal data', data)
             if data.get('register', ''):
                 self.factory.rev_register(self)
             else:
@@ -193,4 +194,5 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
     def rev_broadcast(self, data):
         for client in self.rev_clients:
+            print(json.dumps(data).encode('utf-8'))
             client.sendMessage(json.dumps(data).encode('utf-8'))
