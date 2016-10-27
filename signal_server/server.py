@@ -26,6 +26,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         self.from_app = {
             'chat': self.chat_process_payload,
             'signal': self.signal_process_payload,
+            'reveal': self.reveal_process_payload,
         }
 
     def onMessage(self, payload, isBinary):
@@ -63,6 +64,18 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         self.factory.broadcast_chat_message(self, payload)
         print("Some message received")
 
+    def reveal_process_payload(self, payload):
+        try:
+            data = json.loads(payload.decode('utf8'))
+            if data.get('register', ''):
+                self.factory.rev_register(self)
+            else:
+                self.factory.rev_broadcast(data)
+        except (json.JSONDecodeError, UnicodeDecodeError) as err:
+            print(payload)
+            print(err)
+        print("Some message received")
+
     def onClose(self, wasClean, code, reason):
         if hasattr(self, 'uuid'):
             self.factory.unregister(self.uuid)
@@ -73,6 +86,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
     rooms = {}
     chat_history = {}
     clients = {}
+    rev_clients = []
 
     def __init__(self, url):
         WebSocketServerFactory.__init__(self, url)
@@ -129,6 +143,10 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.clients[uuid] = client
         print(self.clients)
 
+    def register_rev(self, client):
+        if client not in self.rev_clients:
+            self.rev_clients.append(client)
+
     def unregister(self, uuid):
         if uuid in self.clients:
             print("unregistered client with uuid: {}".format(uuid))
@@ -171,3 +189,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
                 client.sendMessage(bytes(message, encoding='utf-8'))
             redis_con.rpush(current_room, message)
             redis_con.expire(current_room, 7200)
+
+    def rev_broadcast(self, data):
+        for client in self.rev_clients:
+            client.sendMessage(json.dumps(data).encode('utf-8'))

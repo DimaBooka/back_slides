@@ -42,7 +42,8 @@
       var messageData = {
         state: Reveal.getState(),
         secret: multiplex.secret,
-        socketId: multiplex.id
+        socketId: multiplex.id,
+        from: 'reveal'
       };
       if (isopen) {
         socket.send(JSON.stringify(messageData));
@@ -59,6 +60,7 @@
   window.onload = function() {
     socket = new WebSocket("ws://{{rvl_socket_addr}}");
     socket.onopen = function() {
+     socket.send({'from': 'reveal', 'register': true}
      console.log("Connected!");
      isopen = true;
    }
