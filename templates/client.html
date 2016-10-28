@@ -38,7 +38,8 @@
   });
   var isopen = false;
   var connection;
-
+  var mutable_pc_state = false;
+  var debug = false;
   function start_socket(websocketServerLocation) {
       connection = new WebSocket(websocketServerLocation);
       connection.onopen = function() {
@@ -100,8 +101,8 @@
           case "candidate":
               onCandidate(data.candidate, data.uuid);
               break;
-          case "leave":
-              onLeave(data.uuid);
+          case "disconnected_host":
+              onHostDisconnect(data.uuid);
               break;
           default:
               break;
@@ -117,13 +118,15 @@
   }
 
   function send(message) {
-      console.log('Function send, yourConnection:', yourConnection)
-      console.log('Function send, connectedUser:', connectedUser);
+      if (debug) {
+          console.log('Function send, yourConnection:', yourConnection);
+          console.log('Function send, connectedUser:', connectedUser);
+          console.log(message);
+      };
       if (connectedUser) {
           message.uuid = connectedUser;
           message.from = 'signal';
       }
-      console.log(message)
       connection.send(JSON.stringify(message));
   };
 
@@ -186,7 +189,9 @@
           offerToReceiveVideo: true
       };
       yourConnection.createOffer(function(offer) {
-          console.log(offer);
+          if (debug) {
+              console.log(offer);
+          };
           send({
               type: "offer",
               offer: offer
@@ -213,11 +218,17 @@
 
   function onAnswer(answer) {
       yourConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      mutable_pc_state = true;
   };
 
   function onCandidate(candidate) {
       yourConnection.addIceCandidate(new RTCIceCandidate(candidate));
   };
+  function onHostDisconnect(uuid) {
+      if (uuid == '{{id}}') {
+          mutable_pc_state = false;
+      }
+  }
   setInterval(function() {
       connection.send(JSON.stringify({
           blank: true
@@ -228,11 +239,13 @@
       if ((yourConnection.iceConnectionState == 'failed') ||
       (yourConnection.iceConnectionState == 'disconnected') ||
       (yourConnection.iceConnectionState == 'new') ||
-      (yourConnection.iceConnectionState == 'closed')) {
+      (yourConnection.iceConnectionState == 'closed') ||
+      (mutable_pc_state == false)) {
+          yourConnection.close()
           startConnection();
           startPeerConnection('{{id}}');
       };
-  }, 1000)
+  }, 2000)
 </script>
 </body>
 </html>

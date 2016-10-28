@@ -57,11 +57,11 @@
       });
   }());
 
-  //connection = new WebSocket("ws://{{socket_addr}}");
   var connection;
   var name = "";
   var peerConnections = {};
   var isopen = false;
+  var debug = false;
 
   function start_socket(websocketServerLocation) {
       connection = new WebSocket(websocketServerLocation);
@@ -81,7 +81,9 @@
       }
       // Handle all messages through this callback
       connection.onmessage = function(message) {
-          console.log("Got message", message.data);
+          if (debug) {
+              console.log("Got message", message.data);
+          };
           var data = JSON.parse(message.data);
           switch (data.type) {
               case "offer":
@@ -123,8 +125,10 @@
 
   function onOffer(offer, uuid) {
       connectedUser = uuid;
-      console.log('gtprcn', getPeerConnection(uuid));
-      console.log(peerConnections);
+      if (debug) {
+          console.log('gtprcn', getPeerConnection(uuid));
+          console.log(peerConnections);
+      };
       getPeerConnection(uuid).setRemoteDescription(new RTCSessionDescription(offer));
       getPeerConnection(uuid).createAnswer(function(answer) {
           getPeerConnection(uuid).setLocalDescription(answer);
@@ -143,8 +147,10 @@
   }
 
   function onCandidate(candidate, uuid) {
-      console.log('uuid on canditate', uuid)
-      console.log(getPeerConnection(uuid))
+      if (debug) {
+          console.log('uuid on canditate', uuid)
+          console.log(getPeerConnection(uuid))
+      };
       getPeerConnection(uuid).addIceCandidate(new RTCIceCandidate(candidate));
   }
 

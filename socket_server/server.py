@@ -16,6 +16,9 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
     token = ''
 
     def onOpen(self):
+        """
+        Defines list of actions and message mark (from_app)
+        """
         print('New connection')
         self.actions = {
             'offer': self.factory.offer,
@@ -29,6 +32,11 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         }
 
     def onMessage(self, payload, isBinary):
+        """
+        Routes payload to specific handler depend of 'from'
+        data['blank'] -- preserves automatic connection close
+        :param payload: received payload
+        """
         print(payload)
         data = json.loads(payload.decode('utf8'))
         if data.get('blank', ''):
@@ -38,6 +46,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             self.from_app[action](payload)
 
     def signal_process_payload(self, payload):
+        """Handles payload destined to WebRTC clients"""
         try:
             data = json.loads(payload.decode('utf8'))
         except (json.JSONDecodeError, UnicodeDecodeError) as err:
@@ -48,6 +57,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             hostname = data.get('hostname', '')
             if hostname:
                 self.uuid = hostname
+                self.host = True
             else:
                 self.uuid = uuid4().hex
             self.factory.register_peer(self, self.uuid)
@@ -59,6 +69,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             print("Some message received")
 
     def chat_process_payload(self, payload):
+        """Handles payload for chat clients"""
         data = json.loads(payload.decode('utf-8'))
         if data.get('room', '') and data.get('token', ''):
             self.room = data['room']
@@ -67,6 +78,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         print("Some message received")
 
     def reveal_process_payload(self, payload):
+        """Handles payload for reveal clients"""
         try:
             data = json.loads(payload.decode('utf8'))
             print('reveal data', data)
@@ -81,6 +93,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         print("Some message received")
 
     def onClose(self, wasClean, code, reason):
+        """Routes close event to specific for client unregister methods"""
         if hasattr(self, 'uuid'):
             self.factory.signal_unregister(self.uuid)
         if hasattr(self, 'room'):
@@ -145,9 +158,13 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.rev_clients.append(client)
 
     def signal_unregister(self, uuid):
+        """If host just disconnected - his subscribers must notified instantly"""
         if uuid in self.clients:
             print("unregistered signal client with uuid: {}".format(uuid))
-            self.clients.pop(uuid)
+            if self.clients[uuid].host:
+                self.clients.pop(uuid)
+                for client in self.clients.values():
+                    self.signal_send_message(client, {'type': 'disconnected_host', 'uuid': uuid})
 
     def chat_unregister(self, conn, room):
         if room in self.rooms:
@@ -193,7 +210,6 @@ class BroadcastServerFactory(WebSocketServerFactory):
     def rev_broadcast(self, data):
         for client in self.rev_clients:
             print(json.dumps(data).encode('utf-8'))
-            print('REV', client.__dict__)
             self.rvl_send_message(client, data)
             
     def rvl_send_message(self, conn, message):
