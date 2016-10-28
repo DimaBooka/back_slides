@@ -3,7 +3,7 @@ from django.views.generic import View
 from slides.models import Event
 
 from django.views.decorators.clickjacking import xframe_options_exempt
-from slide_li.settings import RVL_SOCKET_ADDR, RTC_SOCKET_ADDR
+from slide_li.settings import SOCKET_ADDR
 
 class LivePresentationView(View):
 
@@ -15,7 +15,6 @@ class LivePresentationView(View):
             'id': pk,
             'secret': event.secret,
             'slides': event.presentation.slides,
-            'rvl_socket_addr': RVL_SOCKET_ADDR,
-            'rtc_socket_addr': RTC_SOCKET_ADDR
+            'socket_addr': SOCKET_ADDR,
             }
         return render(request, template, ctx)

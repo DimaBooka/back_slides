@@ -24,247 +24,250 @@
 
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 <script>
-  Reveal.initialize(
-  {
-    embedded: true,
+  Reveal.initialize({
+      embedded: true,
 
-    multiplex: {
-      secret: '{{ secret }}',
-      id: {{ id }},
-      url: 'http://{{rvl_socket_addr}}/'
-    }
+      multiplex: {
+          secret: '{{ secret }}',
+          id: {{ id }},
+          url: 'http://{{socket_addr}}'
+      }
   });
 
   (function() {
-    if ( window.location.search.match( /receiver/gi ) ) { return; }
-    var multiplex = Reveal.getConfig().multiplex;
-    function post() {
-      var messageData = {
-        state: Reveal.getState(),
-        secret: multiplex.secret,
-        socketId: multiplex.id,
-        from: 'reveal'
-      };
-      if (isopen) {
-        socket.send(JSON.stringify(messageData));
+      if (window.location.search.match(/receiver/gi)) {
+          return;
       }
-    };
-    var events = ['slidechanged', 'fragmentshown', 'fragmenthidden', 'overviewhidden', 'overviewshown', 'paused', 'resumed', ]
-    events.forEach(function(item) {
-      Reveal.addEventListener(item, post);
-    });
+      var multiplex = Reveal.getConfig().multiplex;
+
+      function post() {
+          var messageData = {
+              state: Reveal.getState(),
+              secret: multiplex.secret,
+              socketId: multiplex.id,
+              from: 'reveal'
+          };
+          if (isopen) {
+              connection.send(JSON.stringify(messageData));
+          }
+      };
+      var events = ['slidechanged', 'fragmentshown', 'fragmenthidden', 'overviewhidden', 'overviewshown', 'paused', 'resumed', ]
+      events.forEach(function(item) {
+          Reveal.addEventListener(item, post);
+      });
   }());
 
-  var socket = null;
+  connection = new WebSocket("ws://{{socket_addr}}");
+  var name = "";
+  var peerConnections = {};
   var isopen = false;
-  window.onload = function() {
-    socket = new WebSocket("ws://{{rvl_socket_addr}}");
-    socket.onopen = function() {
-     socket.send(JSON.stringify({'from': 'reveal', 'register': true}));
-     console.log("Connected!");
-     isopen = true;
-   }
-   socket.onclose = function(e) {
-     console.log("RVL Connection closed.", e);
-     socket = null;
-     isopen = false;
-   }
- };
- var connection = new WebSocket('ws://{{rtc_socket_addr}}'),
- name = "",
- peerConnections = {};
-
- connection.onopen = function() {
-  console.log("Connected");
-  connection.send(JSON.stringify({
-    register: true,
-    hostname: '{{id}}',
-    from: 'signal',
-  }));
-  startConnection('test');
-};
-// Handle all messages through this callback
-connection.onmessage = function(message) {
-  console.log("Got message", message.data);
-  var data = JSON.parse(message.data);
-  switch (data.type) {
-    case "offer":
-    onOffer(data.offer, data.uuid);
-    break;
-    case "answer":
-    onAnswer(data.answer, data.uuid);
-    break;
-    case "candidate":
-    onCandidate(data.candidate, data.uuid);
-    break;
-    case "leave":
-    onLeave(data.uuid);
-    break;
-    default:
-    break;
+  connection.onopen = function() {
+      connection.send(JSON.stringify({
+          'from': 'reveal',
+          'register': true
+      }));
+      connection.send(JSON.stringify({
+          register: true,
+          hostname: '{{id}}',
+          from: 'signal',
+      }));
+      startConnection('test');
+      console.log("Connected!");
+      isopen = true;
   }
-};
-connection.onerror = function(err) {
-  console.log("Got error", err);
-};
-// Alias for sending messages in JSON format
-function send(message) {
-  if (connectedUser) {
-    message.uuid = connectedUser;
-    message.from = 'signal';
+  connection.onclose = function(e) {
+      console.log("Connection closed.", e);
+      connection = new WebSocket("ws://{{socket_addr}}");
   }
-  connection.send(JSON.stringify(message));
-};
 
-function onOffer(offer, uuid) {
-  connectedUser = uuid;
-  console.log('gtprcn', getPeerConnection(uuid));
-  console.log(peerConnections);
-  getPeerConnection(uuid).setRemoteDescription(new RTCSessionDescription(offer));
-  getPeerConnection(uuid).createAnswer(function(answer) {
-    getPeerConnection(uuid).setLocalDescription(answer);
-    send({
-      type: "answer",
-      answer: answer
-    });
-  }, function(error) {
-    alert("An error has occurred");
-  });
-}
 
-function onAnswer(answer, uuid) {
-  console.log('uuid on answer', uuid)
-  getPeerConnection(uuid).setRemoteDescription(new RTCSessionDescription(answer));
-}
-
-function onCandidate(candidate, uuid) {
-  console.log('uuid on canditate', uuid)
-  console.log(getPeerConnection(uuid))
-  getPeerConnection(uuid).addIceCandidate(new RTCIceCandidate(candidate));
-}
-
-function onLeave(uuid) {
-  connectedUser = null;
-  getPeerConnection(uuid).close();
-  getPeerConnection(uuid).onicecandidate = null;
-  getPeerConnection(uuid).onaddstream = null;
-  setupPeerConnection(stream);
-}
-
-function hasUserMedia() {
-  navigator.getUserMedia = navigator.getUserMedia ||
-  navigator.webkitGetUserMedia || navigator.mozGetUserMedia ||
-  navigator.msGetUserMedia;
-  return !!navigator.getUserMedia;
-}
-
-function hasRTCPeerConnection() {
-  window.RTCPeerConnection = window.RTCPeerConnection ||
-  window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-  window.RTCSessionDescription = window.RTCSessionDescription ||
-  window.webkitRTCSessionDescription ||
-  window.mozRTCSessionDescription;
-  window.RTCIceCandidate = window.RTCIceCandidate ||
-  window.webkitRTCIceCandidate || window.mozRTCIceCandidate;
-  return !!window.RTCPeerConnection;
-}
-var connectedUser, stream = getLocalStream();
-
-function startConnection(uuid) {
-  if (hasUserMedia()) {
-    navigator.getUserMedia({
-      video: false,
-      audio: true
-    }, function(myStream) {
-      stream = myStream;
-      if (hasRTCPeerConnection()) {
-        setupPeerConnection(stream, uuid);
-      } else {
-        alert("Sorry, your browser does not support WebRTC.");
+  // Handle all messages through this callback
+  connection.onmessage = function(message) {
+      console.log("Got message", message.data);
+      var data = JSON.parse(message.data);
+      switch (data.type) {
+          case "offer":
+              onOffer(data.offer, data.uuid);
+              break;
+          case "answer":
+              onAnswer(data.answer, data.uuid);
+              break;
+          case "candidate":
+              onCandidate(data.candidate, data.uuid);
+              break;
+          case "leave":
+              onLeave(data.uuid);
+              break;
+          default:
+              break;
       }
-    }, function(error) {
-      console.log(error);
-    });
-  } else {
-    alert("Sorry, your browser does not support WebRTC.");
-  }
-}
-
-function setupPeerConnection(stream, uuid) {
-  var configuration = {
-    "iceServers": [{
-      "url": "stun:stun.1.google.com:19302"
-    }]
   };
-    // Setup stream listening
-    getPeerConnection(uuid).addStream(stream);
-    getPeerConnection(uuid).onaddstream = function(e) {
-      console.log('remote stream added')
-    };
-    // Setup ice handling
-    getPeerConnection(uuid).onicecandidate = function(event) {
-      if (event.candidate) {
-        send({
-          type: "candidate",
-          candidate: event.candidate
-        });
+  connection.onerror = function(err) {
+      console.log("Got error", err);
+  };
+  // Alias for sending messages in JSON format
+  function send(message) {
+      if (connectedUser) {
+          message.uuid = connectedUser;
+          message.from = 'signal';
       }
-    };
+      connection.send(JSON.stringify(message));
+  };
+
+  function onOffer(offer, uuid) {
+      connectedUser = uuid;
+      console.log('gtprcn', getPeerConnection(uuid));
+      console.log(peerConnections);
+      getPeerConnection(uuid).setRemoteDescription(new RTCSessionDescription(offer));
+      getPeerConnection(uuid).createAnswer(function(answer) {
+          getPeerConnection(uuid).setLocalDescription(answer);
+          send({
+              type: "answer",
+              answer: answer
+          });
+      }, function(error) {
+          alert("An error has occurred");
+      });
+  }
+
+  function onAnswer(answer, uuid) {
+      console.log('uuid on answer', uuid)
+      getPeerConnection(uuid).setRemoteDescription(new RTCSessionDescription(answer));
+  }
+
+  function onCandidate(candidate, uuid) {
+      console.log('uuid on canditate', uuid)
+      console.log(getPeerConnection(uuid))
+      getPeerConnection(uuid).addIceCandidate(new RTCIceCandidate(candidate));
+  }
+
+  function onLeave(uuid) {
+      connectedUser = null;
+      getPeerConnection(uuid).close();
+      getPeerConnection(uuid).onicecandidate = null;
+      getPeerConnection(uuid).onaddstream = null;
+      setupPeerConnection(stream);
+  }
+
+  function hasUserMedia() {
+      navigator.getUserMedia = navigator.getUserMedia ||
+          navigator.webkitGetUserMedia || navigator.mozGetUserMedia ||
+          navigator.msGetUserMedia;
+      return !!navigator.getUserMedia;
+  }
+
+  function hasRTCPeerConnection() {
+      window.RTCPeerConnection = window.RTCPeerConnection ||
+          window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+      window.RTCSessionDescription = window.RTCSessionDescription ||
+          window.webkitRTCSessionDescription ||
+          window.mozRTCSessionDescription;
+      window.RTCIceCandidate = window.RTCIceCandidate ||
+          window.webkitRTCIceCandidate || window.mozRTCIceCandidate;
+      return !!window.RTCPeerConnection;
+  }
+  var connectedUser, stream = getLocalStream();
+
+  function startConnection(uuid) {
+      if (hasUserMedia()) {
+          navigator.getUserMedia({
+              video: false,
+              audio: true
+          }, function(myStream) {
+              stream = myStream;
+              if (hasRTCPeerConnection()) {
+                  setupPeerConnection(stream, uuid);
+              } else {
+                  alert("Sorry, your browser does not support WebRTC.");
+              }
+          }, function(error) {
+              console.log(error);
+          });
+      } else {
+          alert("Sorry, your browser does not support WebRTC.");
+      }
+  }
+
+  function setupPeerConnection(stream, uuid) {
+      var configuration = {
+          "iceServers": [{
+              "url": "stun:stun.1.google.com:19302"
+          }]
+      };
+      // Setup stream listening
+      getPeerConnection(uuid).addStream(stream);
+      getPeerConnection(uuid).onaddstream = function(e) {
+          console.log('remote stream added')
+      };
+      // Setup ice handling
+      getPeerConnection(uuid).onicecandidate = function(event) {
+          if (event.candidate) {
+              send({
+                  type: "candidate",
+                  candidate: event.candidate
+              });
+          }
+      };
   }
 
   function startPeerConnection(user) {
-    connectedUser = user;
-    // Begin the offer
-    getPeerConnection(uuid).createOffer(function(offer) {
-      send({
-        type: "offer",
-        offer: offer
+      connectedUser = user;
+      // Begin the offer
+      getPeerConnection(uuid).createOffer(function(offer) {
+          send({
+              type: "offer",
+              offer: offer
+          });
+          getPeerConnection(uuid).setLocalDescription(offer);
+      }, function(error) {
+          alert("An error has occurred.");
       });
-      getPeerConnection(uuid).setLocalDescription(offer);
-    }, function(error) {
-      alert("An error has occurred.");
-    });
   };
 
   function getPeerConnection(id) {
-    if (peerConnections[id]) {
-      return peerConnections[id];
-    };
-    var configuration = {
-      "iceServers": [{
-        "url": "stun:stun.1.google.com:19302"
-      }]
-    };
-    var pc = new RTCPeerConnection(configuration);
-    pc.onicecandidate = function(event) {
-      if (event.candidate) {
-        send({
-          type: "candidate",
-          candidate: event.candidate
-        });
+      if (peerConnections[id]) {
+          return peerConnections[id];
+      };
+      var configuration = {
+          "iceServers": [{
+              "url": "stun:stun.1.google.com:19302"
+          }]
+      };
+      var pc = new RTCPeerConnection(configuration);
+      pc.onicecandidate = function(event) {
+          if (event.candidate) {
+              send({
+                  type: "candidate",
+                  candidate: event.candidate
+              });
+          }
+      };
+      if (hasRTCPeerConnection()) {
+          pc.addStream(stream);
+      } else {
+          alert("Sorry, your browser does not support WebRTC.");
       }
-    };
-    if (hasRTCPeerConnection()) {
-      pc.addStream(stream);
-    } else {
-      alert("Sorry, your browser does not support WebRTC.");
-    }
-    peerConnections[id] = pc;
-    return pc;
+      peerConnections[id] = pc;
+      return pc;
   }
 
   function getLocalStream() {
-    if (hasUserMedia()) {
-      navigator.getUserMedia({
-        video: false,
-        audio: true
-      }, function(myStream) {
-        return myStream;
-      }, function(error) {
-        console.log(error);
-      });
-    }
+      if (hasUserMedia()) {
+          navigator.getUserMedia({
+              video: false,
+              audio: true
+          }, function(myStream) {
+              return myStream;
+          }, function(error) {
+              console.log(error);
+          });
+      }
   }
+  setInterval(function() {
+      connection.send(JSON.stringify({
+          blank: true
+      }));
+  }, 10000)
 </script>
 </body>
 </html>
