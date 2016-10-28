@@ -54,6 +54,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             data = {}
 
         if data.get('register', ''):
+            self.host = False
             hostname = data.get('hostname', '')
             if hostname:
                 self.uuid = hostname
@@ -78,15 +79,20 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         print("Some message received")
 
     def reveal_process_payload(self, payload):
-        """Handles payload for reveal clients"""
+        """Handles payload for reveal clients, send last message to just registered user"""
         try:
             data = json.loads(payload.decode('utf8'))
             print('reveal data', data)
             if data.get('register', ''):
                 self.factory.rev_register(self)
                 self.reveal = True
+                last_message = redis_con.get(data['socketId'])
+                print('last message', last_message)
+                if last_message:
+                    self.factory.rvl_send_message(self, json.loads(last_message.decode('utf-8')))
             else:
                 self.factory.rev_broadcast(data)
+
         except (json.JSONDecodeError, UnicodeDecodeError) as err:
             print(payload)
             print(err)
@@ -112,7 +118,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
         WebSocketServerFactory.__init__(self, url)
 
     def offer(self, data, current_uuid):
-        print(data)
+        #print(data)
         uuid = data['uuid']
         if uuid in self.clients:
             conn = self.clients[uuid]
@@ -151,7 +157,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
         if uuid not in self.clients:
             print("registered client {}, uuid: {}".format(client.peer, uuid))
             self.clients[uuid] = client
-        print(self.clients)
+        #print(self.clients)
 
     def rev_register(self, client):
         if client not in self.rev_clients:
@@ -208,8 +214,10 @@ class BroadcastServerFactory(WebSocketServerFactory):
             redis_con.expire(current_room, 7200)
 
     def rev_broadcast(self, data):
+        print(data)
+        redis_con.set(data['socketId'], json.dumps(data).encode('utf-8'))
         for client in self.rev_clients:
-            print(json.dumps(data).encode('utf-8'))
+            #print(json.dumps(data).encode('utf-8'))
             self.rvl_send_message(client, data)
             
     def rvl_send_message(self, conn, message):

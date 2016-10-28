@@ -68,7 +68,8 @@
       connection.onopen = function() {
           connection.send(JSON.stringify({
               'from': 'reveal',
-              'register': true
+              'register': true,
+              'socketId': '{{ id }}',
           }));
           connection.send(JSON.stringify({
               register: true,
