@@ -57,54 +57,61 @@
       });
   }());
 
-  connection = new WebSocket("ws://{{socket_addr}}");
+  //connection = new WebSocket("ws://{{socket_addr}}");
+  var connection;
   var name = "";
   var peerConnections = {};
   var isopen = false;
-  connection.onopen = function() {
-      connection.send(JSON.stringify({
-          'from': 'reveal',
-          'register': true
-      }));
-      connection.send(JSON.stringify({
-          register: true,
-          hostname: '{{id}}',
-          from: 'signal',
-      }));
-      startConnection('test');
-      console.log("Connected!");
-      isopen = true;
-  }
-  connection.onclose = function(e) {
-      console.log("Connection closed.", e);
-      connection = new WebSocket("ws://{{socket_addr}}");
-  }
 
-
-  // Handle all messages through this callback
-  connection.onmessage = function(message) {
-      console.log("Got message", message.data);
-      var data = JSON.parse(message.data);
-      switch (data.type) {
-          case "offer":
-              onOffer(data.offer, data.uuid);
-              break;
-          case "answer":
-              onAnswer(data.answer, data.uuid);
-              break;
-          case "candidate":
-              onCandidate(data.candidate, data.uuid);
-              break;
-          case "leave":
-              onLeave(data.uuid);
-              break;
-          default:
-              break;
+  function start_socket(websocketServerLocation) {
+      connection = new WebSocket(websocketServerLocation);
+      connection.onopen = function() {
+          connection.send(JSON.stringify({
+              'from': 'reveal',
+              'register': true
+          }));
+          connection.send(JSON.stringify({
+              register: true,
+              hostname: '{{id}}',
+              from: 'signal',
+          }));
+          startConnection('test');
+          console.log("Connected!");
+          isopen = true;
       }
-  };
-  connection.onerror = function(err) {
-      console.log("Got error", err);
-  };
+      // Handle all messages through this callback
+      connection.onmessage = function(message) {
+          console.log("Got message", message.data);
+          var data = JSON.parse(message.data);
+          switch (data.type) {
+              case "offer":
+                  onOffer(data.offer, data.uuid);
+                  break;
+              case "answer":
+                  onAnswer(data.answer, data.uuid);
+                  break;
+              case "candidate":
+                  onCandidate(data.candidate, data.uuid);
+                  break;
+              case "leave":
+                  onLeave(data.uuid);
+                  break;
+              default:
+                  break;
+          }
+      };
+      connection.onclose = function() {
+          console.log("Connection closed.");
+          setTimeout(function() {
+              start_socket(websocketServerLocation)
+          }, 1000);
+      };
+      connection.onerror = function(err) {
+          console.log("Got error", err);
+      };
+  }
+  start_socket("ws://{{socket_addr}}")
+
   // Alias for sending messages in JSON format
   function send(message) {
       if (connectedUser) {

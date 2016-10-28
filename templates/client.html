@@ -37,32 +37,43 @@
       }
   });
   var isopen = false;
-  connection = new WebSocket("ws://{{socket_addr}}");
-  connection.onopen = function() {
-      connection.send(JSON.stringify({
-          'from': 'reveal',
-          'register': true
-      }));
-      isopen = true;
-      connection.send(JSON.stringify({
-          register: true,
-          subscriber: true,
-          from: 'signal',
-      }));
-      startConnection();
-      startPeerConnection('{{id}}');
-      console.log("Connected!");
+  var connection;
+
+  function start_socket(websocketServerLocation) {
+      connection = new WebSocket(websocketServerLocation);
+      connection.onopen = function() {
+          connection.send(JSON.stringify({
+              'from': 'reveal',
+              'register': true
+          }));
+          isopen = true;
+          connection.send(JSON.stringify({
+              register: true,
+              subscriber: true,
+              from: 'signal',
+          }));
+          startConnection();
+          startPeerConnection('{{id}}');
+          console.log("Connected!");
+      }
+      connection.onmessage = function(e) {
+          data = JSON.parse(e.data);
+          customOnMessage(data);
+      }
+      connection.onclose = function() {
+          console.log("Connection closed.");
+          setTimeout(function() {
+              start_socket(websocketServerLocation)
+          }, 1000);
+      };
+      connection.onerror = function(err) {
+          console.log("Got error", err);
+      };
   }
+
+  start_socket("ws://{{socket_addr}}")
   var multiplex = Reveal.getConfig().multiplex;
   var socketId = multiplex.id;
-  connection.onmessage = function(e) {
-      data = JSON.parse(e.data);
-      customOnMessage(data);
-  }
-  connection.onclose = function(e) {
-      console.log("Connection closed.");
-      //connection = new WebSocket("ws://{{socket_addr}}");
-  }
 
   function customOnMessage(data) {
       switch (data.to) {
@@ -105,10 +116,6 @@
       Reveal.setState(data.state);
   }
 
-  connection.onerror = function(err) {
-      console.log("Got error", err);
-  };
-
   function send(message) {
       console.log('Function send, yourConnection:', yourConnection)
       console.log('Function send, connectedUser:', connectedUser);
@@ -135,6 +142,7 @@
               "url": "stun:stun.1.google.com:19302"
           }]
       };
+      yourConnection = null;
       yourConnection = new RTCPeerConnection(configuration);
       // Setup stream listening
       yourConnection.onaddstream = function(e) {
@@ -216,11 +224,15 @@
       }));
   }, 10000)
   setInterval(function() {
-      var state = yourConnection.signalingState;
-      if (state == closed) {
+      console.log('PC status: ', yourConnection.iceConnectionState);
+      if ((yourConnection.iceConnectionState == 'failed') ||
+      (yourConnection.iceConnectionState == 'disconnected') ||
+      (yourConnection.iceConnectionState == 'new') ||
+      (yourConnection.iceConnectionState == 'closed')) {
+          startConnection();
           startPeerConnection('{{id}}');
-      }
-  }, 10000)
+      };
+  }, 1000)
 </script>
 </body>
 </html>
