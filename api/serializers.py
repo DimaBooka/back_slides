@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-
+from django.utils.timezone import now
 from rest_framework import serializers
 
 from slides.models import Presentation, Commentary, Event
@@ -49,12 +49,14 @@ class EventSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print(dir(self))
         request = self.context.get('request')
-        print(self._context)
         if not isinstance(self.instance, Event) or request and request.user != self.instance.author:
-            print('del secret')
             del self.fields['secret']
+
+    def validate_date(self, date):
+        if date < now():
+            raise serializers.ValidationError("Event can not be in past")
+        return date
 
     class Meta:
         model = Event

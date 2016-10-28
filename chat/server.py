@@ -76,7 +76,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
         data_dict = json.loads(data.decode('utf-8'))
 
         if data_dict.get('text', '') and user:
-            message = json.dumps({'message': data_dict['text'], 'user': user.username})
+            message = json.dumps({'message': data_dict['text'], 'user': user.username, 'datetime': data_dict['datetime']})
         else:
             message = False
         current_room = data_dict['room']
