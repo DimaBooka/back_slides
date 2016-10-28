@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-
+from django.shortcuts import get_object_or_404
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
@@ -79,12 +79,12 @@ class PasswordReset(PasswordResetView):
         serializer.save()
         if User.objects.filter(email=serializer.validated_data['email']).count() == 0:
             return Response(
-                {"error": "User with this email does not exist."},
+                {'error': 'User with this email does not exist.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         return Response(
-            {"success": "Password reset e-mail has been sent."},
+            {'success': 'Password reset e-mail has been sent.'},
             status=status.HTTP_200_OK
         )
 
@@ -92,6 +92,9 @@ class PasswordReset(PasswordResetView):
 class StartEvent(APIView):
 
     def get(self, request, pk):
-        event = Event.objects.get(id=pk)
+        event = get_object_or_404(Event, id=pk)
         if event.presentation.creator == request.user:  # запилить permission
-            event.update(status=Event.LIVE)
+            event.state = Event.LIVE
+            event.save(update_fields=['state'])
+            return Response({'state': event.get_state_display().lower()}, status=status.HTTP_200_OK)
+        return Response({'error': 'You are not creator of this event.'})

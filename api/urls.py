@@ -28,5 +28,5 @@ urlpatterns = [
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^account-confirm-email/(?P<key>[-:\w]+)/$', RegisterConfirmationView.as_view(),
         name='account_confirm_email'),
-    url(r'^start-event/(?P<pk>\d+)/$', StartEvent.as_view()),
+    url(r'^events/(?P<pk>\d+)/start/$', StartEvent.as_view()),
 ]
