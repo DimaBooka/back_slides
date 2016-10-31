@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <link rel="stylesheet" href="{% static 'reveal.js/css/reveal.css' %}">
+  <link rel="stylesheet" href="{% static 'reveal.js/css/theme/night.css' %}">
+  <div class="reveal">
+    <div class="slides">
+      <section>
+          <p>Event {{state}}</p>
+          {% if state %}
+              <h1>{{date | time:"H:i"}} </h1>
+              <h1>{{date | date:"d.m.Y"}}</h1>
+          {% endif %}
+      </section>
+  </div>
+</div>
+<audio id="theirs" autoplay></audio>
+<script src="{% static 'reveal.js/js/reveal.js' %}"></script>
+<!--<script src="{% static 'reveal.js/lib/js/head.min.js' %}"></script>-->
+<script>
+  Reveal.initialize(
+  {
+    controls: false,
+    progress: false,
+    keyboard: false,
+    overview: false,
+  });
+  function doReload()
+    {
+        location.reload();
+    }
+</script>
+</body>
+</html>
