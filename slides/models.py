@@ -31,7 +31,7 @@ class Event(models.Model):
     name = models.CharField(max_length=40)
     presentation = models.ForeignKey(Presentation)
     author = models.ForeignKey(settings.AUTH_USER_MODEL)
-    date = models.DateTimeField()
+    date_planned = models.DateTimeField()
     date_started = models.DateTimeField(null=True)
     date_finished = models.DateTimeField(null=True)
     secret = models.UUIDField(default=uuid.uuid4, editable=False)
