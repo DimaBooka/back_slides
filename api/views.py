@@ -93,8 +93,19 @@ class StartEvent(APIView):
 
     def get(self, request, pk):
         event = get_object_or_404(Event, id=pk)
-        if event.presentation.creator == request.user:  # запилить permission
+        if event.presentation.creator == request.user:
             event.state = Event.LIVE
+            event.save(update_fields=['state'])
+            return Response({'state': event.get_state_display().lower()}, status=status.HTTP_200_OK)
+        return Response({'error': 'You are not creator of this event.'})
+
+
+class EndEvent(APIView):
+
+    def get(self, request, pk):
+        event = get_object_or_404(Event, id=pk)
+        if event.presentation.creator == request.user:
+            event.state = Event.DONE
             event.save(update_fields=['state'])
             return Response({'state': event.get_state_display().lower()}, status=status.HTTP_200_OK)
         return Response({'error': 'You are not creator of this event.'})

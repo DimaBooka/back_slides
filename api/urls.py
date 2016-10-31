@@ -2,7 +2,7 @@ from allauth.socialaccount.views import signup
 from django.conf.urls import include, url
 from django.contrib.auth.views import password_reset_confirm, password_reset_complete
 from rest_framework.routers import DefaultRouter
-from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset, StartEvent
+from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset, StartEvent, EndEvent
 
 from api import views
 
@@ -29,4 +29,5 @@ urlpatterns = [
     url(r'^account-confirm-email/(?P<key>[-:\w]+)/$', RegisterConfirmationView.as_view(),
         name='account_confirm_email'),
     url(r'^events/(?P<pk>\d+)/start/$', StartEvent.as_view()),
+    url(r'^events/(?P<pk>\d+)/end/$', EndEvent.as_view()),
 ]
