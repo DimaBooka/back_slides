@@ -17,7 +17,7 @@ class EventFilter(FilterSet):
 
     class Meta:
         model = Event
-        fields = ('name', 'presentation_id', 'date', 'state')
+        fields = ('name', 'presentation_id', 'date')
 
 
 class CommentaryFilter(FilterSet):

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
+from django.utils.timezone import now
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
@@ -54,17 +55,17 @@ class EventViewSet(viewsets.ModelViewSet):
         if event.presentation.creator == request.user:
             event.date_started = now()
             event.save(update_fields=['date_started'])
-            return Response({'result': 'Started!'}, status=status.HTTP_200_OK)
+            return Response({'result': 'started'}, status=status.HTTP_200_OK)
         return Response({'error': 'You are not creator of this event.'})
                             
     
     @detail_route(methods=['post'])
-    def end(self, request, pk=None):
+    def finish(self, request, pk=None):
         event = get_object_or_404(Event, id=pk)
         if event.presentation.creator == request.user:
-            event.state = Event.DONE
-            event.save(update_fields=['state'])
-            return Response({'result': 'Ended!'}, status=status.HTTP_200_OK)
+            event.date_finished = now()
+            event.save(update_fields=['date_finished'])
+            return Response({'result': 'finished'}, status=status.HTTP_200_OK)
         return Response({'error': 'You are not creator of this event.'})
 
 
@@ -109,24 +110,3 @@ class PasswordReset(PasswordResetView):
             status=status.HTTP_200_OK
         )
 
-
-class StartEvent(APIView):
-
-    def get(self, request, pk):
-        event = get_object_or_404(Event, id=pk)
-        if event.presentation.creator == request.user:
-            event.state = Event.LIVE
-            event.save(update_fields=['state'])
-            return Response({'state': event.get_state_display().lower()}, status=status.HTTP_200_OK)
-        return Response({'error': 'You are not creator of this event.'})
-
-
-class EndEvent(APIView):
-
-    def get(self, request, pk):
-        event = get_object_or_404(Event, id=pk)
-        if event.presentation.creator == request.user:
-            event.state = Event.DONE
-            event.save(update_fields=['state'])
-            return Response({'state': event.get_state_display().lower()}, status=status.HTTP_200_OK)
-        return Response({'error': 'You are not creator of this event.'})

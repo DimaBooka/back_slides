@@ -28,25 +28,12 @@ class Commentary(models.Model):
 
 
 class Event(models.Model):
-    PLANNED = 1
-    DONE = 2
-    CANCELED = 3
-    POSTPONED = 4
-    LIVE = 5
-
-    STATE_CHOICES = (
-        (PLANNED, "Planned"),
-        (DONE, "Done"),
-        (CANCELED, "Canceled"),
-        (POSTPONED, "Postponed"),
-        (LIVE, "Live"),
-    )
-
     name = models.CharField(max_length=40)
     presentation = models.ForeignKey(Presentation)
     author = models.ForeignKey(settings.AUTH_USER_MODEL)
     date = models.DateTimeField()
-    state = models.IntegerField(choices=STATE_CHOICES, default=PLANNED)
+    date_started = models.DateTimeField(null=True)
+    date_finished = models.DateTimeField(null=True)
     secret = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def __str__(self):
