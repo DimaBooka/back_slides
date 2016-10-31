@@ -180,6 +180,9 @@ if DEBUG:
         'rest_framework.authentication.SessionAuthentication',
     )
 
+ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_ADAPTER = 'api.adapter.SlidesSocialAccountAdapter'
+
 try:
     from .settings_local import *
 except ImportError:
