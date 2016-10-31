@@ -30,7 +30,7 @@
       multiplex: {
           secret: '{{ secret }}',
           id: {{ id }},
-          url: 'http://{{socket_addr}}'
+          url: 'https://{{socket_addr}}'
       }
   });
 
@@ -113,7 +113,7 @@
           console.log("Got error", err);
       };
   }
-  start_socket("ws://{{socket_addr}}")
+  start_socket("wss://{{socket_addr}}")
 
   // Alias for sending messages in JSON format
   function send(message) {

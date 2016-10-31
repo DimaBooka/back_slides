@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
 from rest_auth.registration.views import SocialLoginView
+from rest_framework.decorators import detail_route
 from rest_auth.views import PasswordResetView
 from rest_framework import status
 
@@ -45,6 +47,25 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, )
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filter_class = EventFilter
+    
+    @detail_route(methods=['post'])
+    def start(self, request, pk=None):
+        event = get_object_or_404(Event, id=pk)
+        if event.presentation.creator == request.user:
+            event.date_started = now()
+            event.save(update_fields=['date_started'])
+            return Response({'result': 'Started!'}, status=status.HTTP_200_OK)
+        return Response({'error': 'You are not creator of this event.'})
+                            
+    
+    @detail_route(methods=['post'])
+    def end(self, request, pk=None):
+        event = get_object_or_404(Event, id=pk)
+        if event.presentation.creator == request.user:
+            event.state = Event.DONE
+            event.save(update_fields=['state'])
+            return Response({'result': 'Ended!'}, status=status.HTTP_200_OK)
+        return Response({'error': 'You are not creator of this event.'})
 
 
 class CommentViewSet(viewsets.ModelViewSet):
