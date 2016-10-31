@@ -5,6 +5,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
+from django.utils.timezone import now
 
 from slide_li import settings
 
@@ -193,7 +194,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
         data_dict = json.loads(data.decode('utf-8'))
 
         if data_dict.get('text', '') and user:
-            message = {'message': data_dict['text'], 'user': user.username, 'datetime': data_dict['datetime']}
+            message = {'message': data_dict['text'], 'user': user.username, 'datetime': now().strftime('%X')}
         else:
             message = False
         current_room = data_dict['room']
