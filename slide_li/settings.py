@@ -54,7 +54,6 @@ INSTALLED_APPS = [
 
     'slides.apps.SlidesConfig',
     'api.apps.ApiConfig',
-    'chat.apps.ChatConfig',
     'corsheaders',
     'socket_server',
 ]
@@ -179,6 +178,7 @@ if DEBUG:
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
         'rest_framework.authentication.SessionAuthentication',
     )
+    SSL = False
 
 ACCOUNT_UNIQUE_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'api.adapter.SlidesSocialAccountAdapter'
