@@ -53,10 +53,10 @@ class EventSerializer(serializers.ModelSerializer):
         if not isinstance(self.instance, Event) or request and request.user != self.instance.author:
             del self.fields['secret']
 
-    def validate_date(self, date):
-        if date < now():
+    def validate(self, data):
+        if data.get_object('date_planned', '') < now():
             raise serializers.ValidationError("Event can not be in past")
-        return date
+        return data
 
     class Meta:
         model = Event
