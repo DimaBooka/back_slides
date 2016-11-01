@@ -12,6 +12,7 @@ from slide_li import settings
 User = get_user_model()
 redis_con = redis.from_url(settings.REDIS_CON)
 
+
 class BroadcastServerProtocol(WebSocketServerProtocol):
     room = ''
     token = ''
@@ -87,7 +88,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             if data.get('register', ''):
                 self.factory.rev_register(self)
                 self.reveal = True
-                last_message = redis_con.get(data['socketId'])
+                last_message = redis_con.get('reveal' + str(data['socketId']))
                 print('last message', last_message)
                 if last_message:
                     self.factory.rvl_send_message(self, json.loads(last_message.decode('utf-8')))
@@ -183,7 +184,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.rev_clients.remove(conn)
 
     def broadcast_chat_message(self, conn, data):
-        token = conn.http_headers.get('Authorization', conn.token)
+        token = conn.http_headers.get('authorization', conn.token)
 
         try:
             # token = token.split(' ')[1]
@@ -224,7 +225,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
     def rev_broadcast(self, data):
         print(data)
-        redis_con.set(data['socketId'], json.dumps(data).encode('utf-8'))
+        redis_con.set('reveal' + str(data['socketId']), json.dumps(data).encode('utf-8'))
         for client in self.rev_clients:
             #print(json.dumps(data).encode('utf-8'))
             self.rvl_send_message(client, data)
