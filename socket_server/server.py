@@ -192,12 +192,17 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.cht_send_message(conn, {'error': 'Missing or incorrect token'})
             user = False
         data_dict = json.loads(data.decode('utf-8'))
+        current_room = data_dict.get('room')
 
         if data_dict.get('text', '') and user:
-            message = {'message': data_dict['text'], 'user': user.username, 'datetime': now().strftime('%X')}
+            message = {
+                'message': data_dict['text'],
+                'user': user.username,
+                'datetime': now().strftime('%X'),
+                'room': current_room,
+            }
         else:
             message = False
-        current_room = data_dict['room']
 
         if not data_dict['room'] in self.rooms.keys():
             self.rooms.update({current_room: [conn]})
@@ -207,7 +212,10 @@ class BroadcastServerFactory(WebSocketServerFactory):
                 json.loads(msg.decode('utf-8'))
                 for msg in redis_con.lrange(current_room, 0, -1)
             ]
-            self.cht_send_message(conn, {'messages': messages})
+            self.cht_send_message(conn, {
+                'messages': messages,
+                'room': current_room,
+            })
         if message:
             for client in self.rooms[current_room]:
                 self.cht_send_message(client, message)
