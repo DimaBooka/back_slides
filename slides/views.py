@@ -12,7 +12,7 @@ class LivePresentationView(View):
     @xframe_options_exempt
     def get(self, request, pk):
         event = get_object_or_404(Event, id=pk)
-        if event.state == Event.LIVE:
+        if event.date_started and not event.date_finished:
             template = 'master.html' if request.user == event.author else 'client.html'
             ctx = {
                 'id': pk,
