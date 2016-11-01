@@ -93,22 +93,7 @@
               console.log("Got message", message.data);
           };
           var data = JSON.parse(message.data);
-          switch (data.type) {
-              case "offer":
-                  onOffer(data.offer, data.uuid);
-                  break;
-              case "answer":
-                  onAnswer(data.answer, data.uuid);
-                  break;
-              case "candidate":
-                  onCandidate(data.candidate, data.uuid);
-                  break;
-              case "leave":
-                  onLeave(data.uuid);
-                  break;
-              default:
-                  break;
-          }
+          customOnMessage(data);
       };
       connection.onclose = function() {
           console.log("Connection closed.");
@@ -120,7 +105,46 @@
           console.log("Got error", err);
       };
   }
-  start_socket("{{ "wss" if ssl else "ws" }}://{{socket_addr}}")
+  start_socket("{{prefix}}://{{socket_addr}}")
+  var multiplex = Reveal.getConfig().multiplex;
+  var socketId = multiplex.id;
+
+  function customOnMessage(data) {
+      switch (data.to) {
+          case "signal":
+              signalMessage(data);
+              break;
+          case "reveal":
+              revealMessage(data);
+              break;
+          default:
+              break;
+      }
+  }
+
+  function signalMessage(data) {
+      console.log("Got message", data);
+      switch (data.type) {
+          case "offer":
+              onOffer(data.offer, data.uuid);
+              break;
+          case "answer":
+              onAnswer(data.answer, data.uuid);
+              break;
+          case "candidate":
+              onCandidate(data.candidate, data.uuid);
+              break;
+          default:
+              break;
+      }
+  }
+
+  function revealMessage(data) {
+      console.log(data.socketId);
+      if (data.socketId != socketId) return;
+      if (window.location.host === '{{socket_addr}}') return;
+      Reveal.setState(data.state);
+  }
 
   // Alias for sending messages in JSON format
   function send(message) {

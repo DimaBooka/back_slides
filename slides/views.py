@@ -1,5 +1,4 @@
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from slides.models import Event
 from django.conf import settings
@@ -19,7 +18,7 @@ class LivePresentationView(View):
                 'secret': event.secret,
                 'slides': event.presentation.slides,
                 'socket_addr': SOCKET_ADDR,
-                'ssl': settings.SSL,
+                'prefix': 'wss' if settings.SSL else 'ws',
                 }
         else:
             template = 'wait.html'

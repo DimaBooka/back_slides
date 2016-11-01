@@ -35,7 +35,6 @@
       multiplex: {
           secret: null,
           id: {{ id }},
-          url: 'https://{{socket_addr}}'
       }
   });
   var isopen = false;
@@ -76,7 +75,7 @@
       };
   }
 
-  start_socket("wss://{{socket_addr}}")
+  start_socket("{{prefix}}://{{socket_addr}}")
   var multiplex = Reveal.getConfig().multiplex;
   var socketId = multiplex.id;
 
