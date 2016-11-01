@@ -54,7 +54,7 @@ class EventSerializer(serializers.ModelSerializer):
             del self.fields['secret']
 
     def validate(self, data):
-        if data.get_object('date_planned', '') < now():
+        if data.get('date_planned', '') < now():
             raise serializers.ValidationError("Event can not be in past")
         return data
 
