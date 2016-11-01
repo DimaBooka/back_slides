@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
-from django.utils.timezone import now
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
@@ -48,7 +47,7 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, )
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filter_class = EventFilter
-    
+
     @detail_route(methods=['post'])
     def start(self, request, pk=None):
         event = get_object_or_404(Event, id=pk)
