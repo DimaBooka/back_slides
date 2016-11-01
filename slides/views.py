@@ -23,7 +23,7 @@ class LivePresentationView(View):
         else:
             template = 'wait.html'
             ctx = {
-                'state': event.get_state_display().lower(),
-                'date': event.date if event.state in (1, 4) else None
+                'state': 'planned' if not event.date_finished else 'finished',
+                'date': event.date_planned if not event.date_finished,
             }
         return render(request, template, ctx)
