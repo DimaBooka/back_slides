@@ -3,6 +3,7 @@ from django.conf.urls import include, url
 from django.contrib.auth.views import password_reset_confirm, password_reset_complete
 from rest_framework.routers import DefaultRouter
 from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset
+from allauth.socialaccount.views import connections
 from api import views
 
 router = DefaultRouter()
@@ -21,6 +22,7 @@ urlpatterns = [
         name='rest_password_reset'),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url('^signup/$', signup, name='socialaccount_signup'),
+    url('^connections/$', connections, name='socialaccount_connections'),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
     url(r'^rest-auth/google/$', GoogleLogin.as_view(), name='fb_login'),
