@@ -24,6 +24,6 @@ class LivePresentationView(View):
             template = 'wait.html'
             ctx = {
                 'state': 'planned' if not event.date_finished else 'finished',
-                'date': event.date_planned if not event.date_finished,
+                'date': event.date_planned if not event.date_finished else None,
             }
         return render(request, template, ctx)
