@@ -15,18 +15,16 @@ class PresentationFilter(FilterSet):
 
 
 class EventFilter(FilterSet):
-    date_finished_lte = django_filters.DateTimeFilter(name="date_finished", lookup_expr='lte')
-    date_started_lte = django_filters.DateTimeFilter(name="date_started", lookup_expr='lte')
-    date_planned_lte = django_filters.DateTimeFilter(name="date_planned", lookup_expr='lte')
-    date_finished_gte = django_filters.DateTimeFilter(name="date_finished", lookup_expr='gte')
-    date_started_gte = django_filters.DateTimeFilter(name="date_started", lookup_expr='gte')
-    date_planned_gte = django_filters.DateTimeFilter(name="date_planned", lookup_expr='gte')
-
     class Meta:
         model = Event
-        fields = ('author', 'name', 'presentation_id', 'date_planned', 'date_finished', 'date_started', 
-                  'date_finished_lte', 'date_planned_lte', 'date_started_lte',
-                  'date_finished_gte', 'date_planned_gte', 'date_started_gte')
+        fields = {
+            'author': ['exact'],
+            'name': ['icontains'],
+            'presentation_id': ['exact'],
+            'date_planned': ['exact', 'lte', 'gte'],
+            'date_finished': ['exact', 'lte', 'gte'],
+            'date_started': ['exact', 'lte', 'gte'],
+        }
 
 class CommentaryFilter(FilterSet):
 
