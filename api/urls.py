@@ -1,6 +1,6 @@
 from allauth.socialaccount.views import signup
 from django.conf.urls import include, url
-from django.contrib.auth.views import password_reset_confirm, password_reset_complete
+from django.contrib.auth.views import password_reset_confirm
 from rest_framework.routers import DefaultRouter
 from allauth.account.views import email_verification_sent
 from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset
@@ -16,7 +16,7 @@ router.register(r'comments', views.CommentViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^reset/done/$', password_reset_complete, {'template_name': 'password-reset-done.html'}, name='password_reset_complete'),
+    url(r'^reset/done/$', views.password_reset_complete, name='password_reset_complete'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, {'template_name': 'password-reset-confirm.html'}, name='password_reset_confirm'),
     url(r'^rest-auth/registration/verify-email/$', views.SlidesVerifyEmailView.as_view(), name='rest_verify_email'),

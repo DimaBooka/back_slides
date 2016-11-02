@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.views import deprecate_current_app
 from django.utils.timezone import now
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, resolve_url
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
@@ -115,3 +117,8 @@ class SlidesVerifyEmailView(VerifyEmailView):
     def post(self, request, *args, **kwargs):
         super().post(request, *args, **kwargs)
         return redirect('/#!/login/')
+
+
+@deprecate_current_app
+def password_reset_complete(request):
+    return redirect('/#!/reset/done/')

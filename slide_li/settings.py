@@ -182,6 +182,7 @@ if DEBUG:
 
 ACCOUNT_UNIQUE_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'api.adapter.SlidesSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'api.adapter.SlidesAccountAdapter'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_REQUIRED = True
 
