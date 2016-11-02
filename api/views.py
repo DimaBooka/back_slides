@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from django.views.generic import TemplateView
-from rest_auth.registration.views import SocialLoginView
+from rest_auth.registration.views import SocialLoginView, VerifyEmailView
 from rest_framework.decorators import detail_route
 from rest_auth.views import PasswordResetView
 from rest_framework import status
@@ -109,3 +109,9 @@ class PasswordReset(PasswordResetView):
             status=status.HTTP_200_OK
         )
 
+
+class SlidesVerifyEmailView(VerifyEmailView):
+
+    def post(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
+        return redirect('/#!/login/')

@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^reset/done/$', password_reset_complete, {'template_name': 'password-reset-done.html'}, name='password_reset_complete'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, {'template_name': 'password-reset-confirm.html'}, name='password_reset_confirm'),
+    url(r'^rest-auth/registration/verify-email/$', views.SlidesVerifyEmailView.as_view(), name='rest_verify_email'),
     url(r'^rest-auth/password/reset/$', PasswordReset.as_view(),
         name='rest_password_reset'),
     url(r'^rest-auth/', include('rest_auth.urls')),
