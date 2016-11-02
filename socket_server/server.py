@@ -100,7 +100,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
                 if last_message:
                     self.factory.rvl_send_message(self, json.loads(last_message.decode('utf-8')))
             else:
-                self.factory.rev_broadcast(data)
+                self.factory.rev_broadcast(self, data)
 
         except (json.JSONDecodeError, UnicodeDecodeError) as err:
             print(payload)
@@ -227,11 +227,12 @@ class BroadcastServerFactory(WebSocketServerFactory):
             redis_con.rpush(room, json.dumps(message).encode('utf-8'))
             redis_con.expire(room, 7200)
 
-    def rev_broadcast(self, data):
+    def rev_broadcast(self, conn, data):
         print(data)
         redis_con.set('reveal' + str(data['socketId']), json.dumps(data).encode('utf-8'))
         for client in self.rev_clients:
-            self.rvl_send_message(client, data)
+            if client is not conn:
+                self.rvl_send_message(client, data)
             
     def rvl_send_message(self, conn, message):
         message['to'] = 'reveal'
