@@ -61,7 +61,15 @@
   var peerConnections = {};
   var isopen = false;
   var debug = false;
-
+  var connectedUser; 
+  var mediaTracks = null; 
+  var stream = getLocalStream();
+  
+  window.addEventListener('message', function (event) {
+    if (event.data == "mute" && mediaTracks && mediaTracks[0]) {
+        mediaTracks[0].enabled = !mediaTracks[0].enabled;
+    }
+  });
   function start_socket(websocketServerLocation) {
       connection = new WebSocket(websocketServerLocation);
       connection.onopen = function() {
@@ -179,7 +187,6 @@
           window.webkitRTCIceCandidate || window.mozRTCIceCandidate;
       return !!window.RTCPeerConnection;
   }
-  var connectedUser, stream = getLocalStream();
 
   function startConnection(uuid) {
       if (hasUserMedia()) {
@@ -188,6 +195,13 @@
               audio: true
           }, function(myStream) {
               stream = myStream;
+              mediaTracks = stream.getAudioTracks();
+              state = Reveal.getState();
+              if (state.paused) {
+                if (mediaTracks[0]) {
+                  mediaTracks[0].enabled = false;
+                };
+              };
               if (hasRTCPeerConnection()) {
                   setupPeerConnection(stream, uuid);
               } else {
