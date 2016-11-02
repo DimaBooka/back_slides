@@ -39,7 +39,7 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         data['blank'] -- preserves automatic connection close
         :param payload: received payload
         """
-        print(payload)
+        #print(payload)
         data = json.loads(payload.decode('utf8'))
         if data.get('blank', ''):
             return
@@ -73,12 +73,20 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
 
     def chat_process_payload(self, payload):
         """Handles payload for chat clients"""
-        data = json.loads(payload.decode('utf-8'))
-        if data.get('room', '') and data.get('token', ''):
-            self.room = data['room']
-            self.token = data['token']
-        self.factory.broadcast_chat_message(self, payload)
-        print("Some message received")
+        print('Some message received')
+        try:
+            data = json.loads(payload.decode('utf8'))
+        except (json.JSONDecodeError, UnicodeDecodeError) as err:
+            print(err)
+            return
+        if 'register' in data:
+            self.factory.chat_register(self, data)
+            self.factory.send_chat_history(self)
+        else:
+            self.factory.broadcast_chat_message(self, data)
+        #if data.get('room', '') and data.get('token', ''):
+        #    self.room = data['room']
+        #    self.token = data['token']
 
     def reveal_process_payload(self, payload):
         """Handles payload for reveal clients, send last message to just registered user"""
@@ -87,7 +95,6 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             print('reveal data', data)
             if data.get('register', ''):
                 self.factory.rev_register(self)
-                self.reveal = True
                 last_message = redis_con.get('reveal' + str(data['socketId']))
                 print('last message', last_message)
                 if last_message:
@@ -105,14 +112,13 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
         if hasattr(self, 'uuid'):
             self.factory.signal_unregister(self.uuid)
         if hasattr(self, 'room'):
-            self.factory.chat_unregister(self, self.room)
+            self.factory.chat_unregister(self)
         if hasattr(self, 'reveal'):
             self.factory.rev_unregister(self)
 
 
 class BroadcastServerFactory(WebSocketServerFactory):
     rooms = {}
-    chat_history = {}
     clients = {}
     rev_clients = []
 
@@ -129,7 +135,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
                 'offer': data['offer'],
                 'uuid': current_uuid,
             })
-            print("Offer to {} with uuid: {}".format(conn.peer, uuid))
+            #print("Offer to {} with uuid: {}".format(conn.peer, uuid))
 
     def answer(self, data, current_uuid):
         print(data)
@@ -141,7 +147,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
                 'answer': data['answer'],
                 'uuid': current_uuid,
             })
-            print("Answer to {} with from: {}".format(conn.peer, uuid))
+            #print("Answer to {} with from: {}".format(conn.peer, uuid))
 
     def candidate(self, data, current_uuid):
         uuid = data['uuid']
@@ -152,7 +158,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
                 'candidate': data['candidate'],
                 'uuid': current_uuid,
             })
-            print("Candidate from {} with uuid: {}".format(conn.peer, uuid))
+            #print("Candidate from {} with uuid: {}".format(conn.peer, uuid))
 
     def register_peer(self, client, uuid):
         self.uuid = uuid
@@ -160,6 +166,21 @@ class BroadcastServerFactory(WebSocketServerFactory):
             print("registered client {}, uuid: {}".format(client.peer, uuid))
             self.clients[uuid] = client
         #print(self.clients)
+
+    def chat_register(self, conn, data):
+        room = data['room']
+        conn.room = room
+        if room in self.rooms:
+            self.rooms[room].append(conn)
+        else:
+            self.rooms.update({room: [conn]})
+
+    def send_chat_history(self, conn):
+        message = {'messages': [
+            json.loads(msg.decode('utf-8'))
+            for msg in redis_con.lrange(conn.room, 0, -1)
+        ]}
+        self.cht_send_message(conn, message)
 
     def rev_register(self, client):
         if client not in self.rev_clients:
@@ -174,7 +195,9 @@ class BroadcastServerFactory(WebSocketServerFactory):
                 for client in self.clients.values():
                     self.signal_send_message(client, {'type': 'disconnected_host', 'uuid': uuid})
 
-    def chat_unregister(self, conn, room):
+    def chat_unregister(self, conn):
+        print('chat unregister')
+        room = conn.room
         if room in self.rooms:
             if conn in self.rooms[room]:
                 self.rooms[room].remove(conn)
@@ -184,50 +207,30 @@ class BroadcastServerFactory(WebSocketServerFactory):
             self.rev_clients.remove(conn)
 
     def broadcast_chat_message(self, conn, data):
-        token = conn.http_headers.get('authorization', conn.token)
-
+        token = data['token']
         try:
-            # token = token.split(' ')[1]
             user = Token.objects.select_related('user').get(key=token).user
-        except:
+        except Exception as e:
+            print(e)
             self.cht_send_message(conn, {'error': 'Missing or incorrect token'})
-            user = False
-        data_dict = json.loads(data.decode('utf-8'))
-        current_room = data_dict.get('room')
+            return
 
-        if data_dict.get('text', '') and user:
+        if 'text' in data:
             message = {
-                'message': data_dict['text'],
+                'message': data['text'],
                 'user': user.username,
                 'datetime': now().strftime('%X'),
-                'room': current_room,
             }
-        else:
-            message = False
-
-        if not data_dict['room'] in self.rooms.keys():
-            self.rooms.update({current_room: [conn]})
-        elif conn not in self.rooms[current_room]:
-            self.rooms[current_room].append(conn)
-            messages = [
-                json.loads(msg.decode('utf-8'))
-                for msg in redis_con.lrange(current_room, 0, -1)
-            ]
-            self.cht_send_message(conn, {
-                'messages': messages,
-                'room': current_room,
-            })
-        if message:
-            for client in self.rooms[current_room]:
+            room = conn.room
+            for client in self.rooms[room]:
                 self.cht_send_message(client, message)
-            redis_con.rpush(current_room, json.dumps(message).encode('utf-8'))
-            redis_con.expire(current_room, 7200)
+            redis_con.rpush(room, json.dumps(message).encode('utf-8'))
+            redis_con.expire(room, 7200)
 
     def rev_broadcast(self, data):
         print(data)
         redis_con.set('reveal' + str(data['socketId']), json.dumps(data).encode('utf-8'))
         for client in self.rev_clients:
-            #print(json.dumps(data).encode('utf-8'))
             self.rvl_send_message(client, data)
             
     def rvl_send_message(self, conn, message):
@@ -236,11 +239,14 @@ class BroadcastServerFactory(WebSocketServerFactory):
         conn.sendMessage(json.dumps(message).encode('utf-8'))
 
     def cht_send_message(self, conn, message):
-        message['to'] = 'chat'
+        message.update({
+            'to': 'chat',
+            'room': conn.room,
+        })
         print('Sending message:', message)
         conn.sendMessage(json.dumps(message).encode('utf-8'))
 
     def signal_send_message(self, conn, message):
         message['to'] = 'signal'
-        print('Sending message:', message)
+        #print('Sending message:', message)
         conn.sendMessage(json.dumps(message).encode('utf-8'))
