@@ -182,6 +182,8 @@ if DEBUG:
 
 ACCOUNT_UNIQUE_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'api.adapter.SlidesSocialAccountAdapter'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_REQUIRED = True
 
 try:
     from .settings_local import *
