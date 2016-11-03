@@ -22,8 +22,8 @@ class EventFilter(FilterSet):
             'name': ['icontains'],
             'presentation_id': ['exact'],
             'date_planned': ['exact', 'lte', 'gte'],
-            'date_finished': ['exact', 'lte', 'gte'],
-            'date_started': ['exact', 'lte', 'gte'],
+            'date_finished': ['exact', 'lte', 'gte', 'isnull'],
+            'date_started': ['exact', 'lte', 'gte', 'isnull'],
         }
 
 class CommentaryFilter(FilterSet):
