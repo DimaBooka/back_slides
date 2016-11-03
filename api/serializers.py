@@ -55,10 +55,12 @@ class EventSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         try:
-            if self.initial_data.get('date_planned', '') < now():
-                raise serializers.ValidationError("Event can not be in past")
-            return data
-        except: raise serializers.ValidationError("Date not found")
+            correct_date = data.get('date_planned', '') > now()
+        except:
+            raise serializers.ValidationError("Incorrect or empty date")
+        if not correct_date:
+            raise serializers.ValidationError("Event can not be in past")
+        return data
 
     class Meta:
         model = Event
