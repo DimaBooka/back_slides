@@ -85,27 +85,23 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             self.factory.send_chat_history(self)
         else:
             self.factory.broadcast_chat_message(self, data)
-        #if data.get('room', '') and data.get('token', ''):
-        #    self.room = data['room']
-        #    self.token = data['token']
 
     def reveal_process_payload(self, payload):
         """Handles payload for reveal clients, send last message to just registered user"""
         try:
             data = json.loads(payload.decode('utf8'))
-            print('reveal data', data)
-            if data.get('register', ''):
-                self.factory.rev_register(self)
+        except (json.JSONDecodeError, UnicodeDecodeError) as err:
+            print(err)
+            return
+        if 'register' in data:
+            self.factory.rev_register(self)
+            if 'waiter' not in data:
                 last_message = redis_con.get('reveal' + str(data['socketId']))
-                print('last message', last_message)
                 if last_message:
                     self.factory.rvl_send_message(self, json.loads(last_message.decode('utf-8')))
-            else:
-                self.factory.rev_broadcast(self, data)
+        else:
+            self.factory.rev_broadcast(self, data)
 
-        except (json.JSONDecodeError, UnicodeDecodeError) as err:
-            print(payload)
-            print(err)
         print("Some message received")
 
     def onClose(self, wasClean, code, reason):
@@ -231,7 +227,8 @@ class BroadcastServerFactory(WebSocketServerFactory):
 
     def rev_broadcast(self, conn, data):
         print(data)
-        redis_con.set('reveal' + str(data['socketId']), json.dumps(data).encode('utf-8'))
+        if 'event' not in data:
+            redis_con.set('reveal' + str(data['socketId']), json.dumps(data).encode('utf-8'))
         for client in self.rev_clients:
             if client is not conn:
                 self.rvl_send_message(client, data)
