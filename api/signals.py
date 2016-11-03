@@ -13,11 +13,11 @@ def callback(instance, **kwargs):
         username = instance.extra_data.get('first_name') or instance.extra_data.get('given_name')
         username = slugify(username) + str(instance.user_id)
         instance.user.username = username
-    gender = instance.extra_data.get('gender')
-    if gender == 'male':
-        instance.user.gender = 1
-    elif gender == 'female':
-        instance.user.gender = 2
-    else:
-        instance.user.gender = 3
-    instance.user.save()
+        gender = instance.extra_data.get('gender')
+        if gender == 'male':
+            instance.user.gender = 1
+        elif gender == 'female':
+            instance.user.gender = 2
+        else:
+            instance.user.gender = 3
+        instance.user.save()
