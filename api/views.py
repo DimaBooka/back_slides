@@ -4,12 +4,13 @@ from django.contrib.auth.views import deprecate_current_app
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect, resolve_url
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter, fb_complete_login
 from django.views.generic import TemplateView
 from rest_auth.registration.views import SocialLoginView, VerifyEmailView
 from rest_framework.decorators import detail_route
 from rest_auth.views import PasswordResetView
 from rest_framework import status
+from rest_framework.exceptions import ParseError
 
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework import permissions
@@ -82,8 +83,17 @@ class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
 
 
+class SlidesFacebookOAuth2Adapter(FacebookOAuth2Adapter):
+
+    def complete_login(self, request, app, access_token, **kwargs):
+        complete_login = fb_complete_login(request, app, access_token)
+        if not complete_login.account.extra_data.get('email', ''):
+            raise ParseError('Facebook do not response. Please try again later.')
+        return complete_login
+
+
 class FacebookLogin(SocialLoginView):
-    adapter_class = FacebookOAuth2Adapter
+    adapter_class = SlidesFacebookOAuth2Adapter
 
 
 class RegisterConfirmationView(TemplateView):
