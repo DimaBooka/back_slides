@@ -41,6 +41,13 @@
   var connection;
   var mutable_pc_state = false;
   var debug = false;
+  var multiplex = Reveal.getConfig().multiplex;
+  var socketId = multiplex.id;
+  window.addEventListener('message', function (event) {
+    if (event.data == "mute") {
+        theirAudio.muted = !theirAudio.muted;
+    }
+  });
   function start_socket(websocketServerLocation) {
       connection = new WebSocket(websocketServerLocation);
       connection.onopen = function() {
@@ -74,10 +81,8 @@
           console.log("Got error", err);
       };
   }
-
+  
   start_socket("{{prefix}}://{{socket_addr}}")
-  var multiplex = Reveal.getConfig().multiplex;
-  var socketId = multiplex.id;
 
   function customOnMessage(data) {
       switch (data.to) {
