@@ -118,11 +118,16 @@
   }
 
   function revealMessage(data) {
-      console.log(data.socketId);
-      console.log(socketId);
       if (data.socketId != socketId) return;
       if (window.location.host === '{{socket_addr}}') return;
-      Reveal.setState(data.state);
+      if ('state' in data) {
+        Reveal.setState(data.state);
+      }
+      if ('event' in data) {
+        parent.postMessage(data['event'], '*' );
+        console.log(data['event'], parent);
+        document.location.reload();
+      }
   }
 
   function send(message) {

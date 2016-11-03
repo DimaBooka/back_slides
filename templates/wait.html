@@ -30,6 +30,52 @@
     keyboard: false,
     overview: false,
   });
+
+  var isopen = false;
+  var connection;
+  var socketId = '{{ id }}';
+  function start_socket(websocketServerLocation) {
+      connection = new WebSocket(websocketServerLocation);
+      connection.onopen = function() {
+          isopen = true;
+          connection.send(JSON.stringify({
+              'from': 'reveal',
+              'register': true,
+              'waiter': true,
+              'socketId': '{{ id }}',
+          }));
+          console.log("Connected!");
+      }
+      connection.onmessage = function(e) {
+          data = JSON.parse(e.data);
+          console.log(data);
+          customOnMessage(data);
+      }
+      connection.onclose = function() {
+          console.log("Connection closed.");
+          setTimeout(function() {
+              start_socket(websocketServerLocation)
+          }, 1000);
+      };
+      connection.onerror = function(err) {
+          console.log("Got error", err);
+      };
+  }
+
+  start_socket("{{prefix}}://{{socket_addr}}");
+
+  function customOnMessage(data) {
+      if (data.socketId != socketId) return;
+      if (window.location.host === '{{socket_addr}}') return;
+      if ('state' in data) {
+        Reveal.setState(data.state);
+      }
+      if ('event' in data) {
+        parent.postMessage(data['event'], '*' );
+        console.log(data['event'], parent);
+        document.location.reload();
+      }
+  }
 </script>
 </body>
 </html>
