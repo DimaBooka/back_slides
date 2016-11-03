@@ -6,6 +6,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol, \
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from django.utils.timezone import now
+from django.utils.text import Truncator
 
 from slide_li import settings
 
@@ -216,8 +217,9 @@ class BroadcastServerFactory(WebSocketServerFactory):
             return
 
         if 'text' in data:
+            text = Truncator(data['text'])
             message = {
-                'message': data['text'],
+                'message': text.chars(120, '\u2026'),
                 'user': user.username,
                 'datetime': now().strftime('%X'),
             }
