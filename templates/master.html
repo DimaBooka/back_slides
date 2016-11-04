@@ -143,7 +143,15 @@
       if (data.socketId != socketId) return;
       if (window.location.host === '{{socket_addr}}') return;
       if ('state' in data) {
-        Reveal.setState(data.state);
+        console.log(data);
+        if (data.state.paused) {
+          parent.postMessage('paused', '*' );
+        }
+        if (Reveal.isPaused()) {
+          if (!data.state.paused) {
+            parent.postMessage('unpaused', '*' );
+          }
+        }
       }
       if ('event' in data) {
         parent.postMessage(data['event'], '*' );

@@ -122,6 +122,12 @@
       if (window.location.host === '{{socket_addr}}') return;
       if ('state' in data) {
         Reveal.setState(data.state);
+        if (Reveal.isPaused()) {
+          parent.postMessage('paused', '*' );
+        }
+        if (!Reveal.isPaused()) {
+          parent.postMessage('unpaused', '*' );
+        }
       }
       if ('event' in data) {
         parent.postMessage(data['event'], '*' );
