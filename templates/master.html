@@ -64,12 +64,18 @@
   var connectedUser; 
   var mediaTracks = null; 
   var stream = getLocalStream();
-  
+
+  window.document.body.addEventListener("dblclick", () => Reveal.triggerKey(70));
+
   window.addEventListener('message', function (event) {
     if (event.data == "mute" && mediaTracks && mediaTracks[0]) {
         mediaTracks[0].enabled = !mediaTracks[0].enabled;
     }
+    if (event.data == "fullscreen") {
+      Reveal.triggerKey(70);
+    }
   });
+
   function start_socket(websocketServerLocation) {
       connection = new WebSocket(websocketServerLocation);
       connection.onopen = function() {

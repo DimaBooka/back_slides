@@ -43,9 +43,15 @@
   var debug = false;
   var multiplex = Reveal.getConfig().multiplex;
   var socketId = multiplex.id;
+
+  window.document.body.addEventListener("dblclick", () => Reveal.triggerKey(70));
+
   window.addEventListener('message', function (event) {
     if (event.data == "mute") {
         theirAudio.muted = !theirAudio.muted;
+    }
+    if (event.data == "fullscreen") {
+      Reveal.triggerKey(70);
     }
   });
   function start_socket(websocketServerLocation) {
