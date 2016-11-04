@@ -1,4 +1,3 @@
-import django_filters
 from django.db.models import Q
 
 from rest_framework.filters import BaseFilterBackend
@@ -25,6 +24,7 @@ class EventFilter(FilterSet):
             'date_finished': ['exact', 'lte', 'gte', 'isnull'],
             'date_started': ['exact', 'lte', 'gte', 'isnull'],
         }
+
 
 class CommentaryFilter(FilterSet):
 
