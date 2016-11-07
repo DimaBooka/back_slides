@@ -93,6 +93,10 @@ class BroadcastServerProtocol(WebSocketServerProtocol):
             print(err)
             return
         if 'register' in data:
+            self.reveal = True
+            self.host = False
+            if data.get('host', ''):
+                self.host = True
             self.factory.rev_register(self)
             if 'waiter' not in data:
                 last_message = redis_con.get('reveal' + str(data['socketId']))
@@ -222,7 +226,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
         if 'event' not in data:
             redis_con.set('reveal' + str(data['socketId']), json.dumps(data).encode('utf-8'))
         for client in self.rev_clients:
-            if client is not conn:
+            if client is not conn and not client.host:
                 self.rvl_send_message(client, data)
             
     def rvl_send_message(self, conn, message):

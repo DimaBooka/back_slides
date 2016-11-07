@@ -83,6 +83,7 @@
               'from': 'reveal',
               'register': true,
               'socketId': '{{ id }}',
+              'host': true,
           }));
           connection.send(JSON.stringify({
               register: true,
@@ -149,6 +150,7 @@
       if (data.socketId != socketId) return;
       if (window.location.host === '{{socket_addr}}') return;
       if ('state' in data) {
+        Reveal.setState(data.state);
         console.log(data);
         if (data.state.paused) {
           parent.postMessage('paused', '*' );
