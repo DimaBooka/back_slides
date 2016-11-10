@@ -3,7 +3,7 @@ from django.conf.urls import include, url
 from django.contrib.auth.views import password_reset_confirm
 from rest_framework.routers import DefaultRouter
 from allauth.account.views import email_verification_sent
-from api.views import FacebookLogin, GoogleLogin, RegisterConfirmationView, PasswordReset
+from api.views import FacebookLogin, GoogleLogin, PasswordReset
 from allauth.socialaccount.views import connections
 from api import views
 
@@ -31,6 +31,5 @@ urlpatterns = [
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
     url(r'^rest-auth/google/$', GoogleLogin.as_view(), name='fb_login'),
     url(r'^', include('django.contrib.auth.urls')),
-    url(r'^account-confirm-email/(?P<key>[-:\w]+)/$', RegisterConfirmationView.as_view(),
-        name='account_confirm_email'),
+    url(r'^accept-email/$', view=views.accept_email_view),
 ]
