@@ -69,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'api.middleware.SlidesMiddleware',
 ]
 
 ROOT_URLCONF = 'slide_li.urls'
@@ -146,6 +147,13 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
+
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
 }
@@ -176,9 +184,6 @@ if DEBUG:
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
-        'rest_framework.authentication.SessionAuthentication',
-    )
     SSL = False
 
 ACCOUNT_UNIQUE_EMAIL = True
