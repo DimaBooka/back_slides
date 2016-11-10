@@ -1,23 +1,26 @@
+import json
+
+import redis
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import deprecate_current_app
+from django.http import HttpResponse
 from django.utils.timezone import now
-from django.shortcuts import get_object_or_404, redirect, resolve_url
+from django.shortcuts import get_object_or_404, redirect
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter, fb_complete_login
-from django.views.generic import TemplateView
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+
 from rest_auth.registration.views import SocialLoginView, VerifyEmailView
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, api_view
 from rest_auth.views import PasswordResetView
 from rest_framework import status
-from rest_framework.exceptions import ParseError
 
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.reverse import reverse
-from rest_framework.views import APIView
 
 from api.filters import PresentationFilter, EventFilter, CommentaryFilter, PublishedPresentationFilter
 from api.permissions import IsOwnerOrStaffOrReadOnly
@@ -34,6 +37,7 @@ from slides.models import (
 
 
 User = get_user_model()
+redis_con = redis.from_url(settings.REDIS_CON)
 
 
 class PresentationViewSet(viewsets.ModelViewSet):
@@ -59,8 +63,7 @@ class EventViewSet(viewsets.ModelViewSet):
             event.save(update_fields=['date_started'])
             return Response({'result': 'started'}, status=status.HTTP_200_OK)
         return Response({'error': 'You are not creator of this event.'})
-                            
-    
+
     @detail_route(methods=['post'])
     def finish(self, request, pk=None):
         event = get_object_or_404(Event, id=pk)
@@ -83,25 +86,38 @@ class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
 
 
-class SlidesFacebookOAuth2Adapter(FacebookOAuth2Adapter):
-
-    def complete_login(self, request, app, access_token, **kwargs):
-        complete_login = fb_complete_login(request, app, access_token)
-        if not complete_login.account.extra_data.get('email', ''):
-            raise ParseError('Facebook do not response. Please try again later.')
-        return complete_login
-
-
 class FacebookLogin(SocialLoginView):
-    adapter_class = SlidesFacebookOAuth2Adapter
+    adapter_class = FacebookOAuth2Adapter
 
 
-class RegisterConfirmationView(TemplateView):
-    template_name = 'registration-confirm-page.html'
+@api_view(['POST'])
+def accept_email_view(request):
 
-    def get_context_data(self, **kwargs):
-        kwargs['key'] = self.kwargs['key']
-        return super().get_context_data(**kwargs)
+    if request.method == 'POST':
+        email = request.data.get('email', '')
+        password = request.data.get('password', '')
+
+        if User.objects.filter(email=email).exists() and not password:
+            redis_con.set(request.user.id, email)
+            redis_con.expire(request.user.id, 1800)
+            return HttpResponse(content=json.dumps({"email": "exists"}), status=200, content_type='application/json',)
+
+        elif password:
+            if User.objects.get(email=redis_con.get(request.user.id)).check_password(password):
+                SocialAccount.objects.filter(user_id=request.user.id).update(user_id=User.objects.get(email=redis_con.get(request.user.id)).pk)
+                User.objects.filter(username=request.user.username).delete()
+                return HttpResponse(content=json.dumps({"success": request.user.auth_token.key}),
+                                    status=200,
+                                    content_type='application')
+            else:
+                return HttpResponse(content=json.dumps({"error": "Incorrect password"}), status=400, content_type='application/json',)
+
+        else:
+            User.objects.filter(username=request.user.username).update(email=email)
+            EmailAddress.objects.create(email=email, verified=True,
+                                        user_id=request.user.id, primary=True)
+
+    return HttpResponse(content=json.dumps({"success": request.user.auth_token.key}), status=201, content_type='application/json',)
 
 
 class PasswordReset(PasswordResetView):
@@ -126,9 +142,9 @@ class SlidesVerifyEmailView(VerifyEmailView):
 
     def post(self, request, *args, **kwargs):
         super().post(request, *args, **kwargs)
-        return redirect('/#!/login/')
+        return redirect('/login/')
 
 
 @deprecate_current_app
 def password_reset_complete(request):
-    return redirect('/#!/reset/done/')
+    return redirect('/reset/done/')

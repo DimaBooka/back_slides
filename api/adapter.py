@@ -4,6 +4,10 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.utils import build_absolute_uri
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
+from django.core.mail import send_mail
+from django.utils.text import slugify
+
+from api.passgen import generate_password
 
 User = get_user_model()
 
@@ -18,11 +22,13 @@ class SlidesSocialAccountAdapter(DefaultSocialAccountAdapter):
             sociallogin.state['process'] = 'connect'
             perform_login(request, user, 'none')
         except User.DoesNotExist:
-            pass
+            username = user.first_name
+            username = slugify(username) + str(user.logentry_set.creation_counter)
+            user.username = username
 
 
 class SlidesAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request, emailconfirmation):
         url = reverse("account_confirm_email", args=[emailconfirmation.key])
         ret = build_absolute_uri(request, url)
-        return ret.replace('api', '#!')
+        return ret.replace('api', '#')
