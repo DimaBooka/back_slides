@@ -4,6 +4,7 @@ Django==1.10.2
 django-allauth==0.27.0
 django-cors-headers==1.2.2
 django-filter==0.15.2
+python-memcached==1.58
 django-rest-auth==0.8.1
 djangorestframework==3.4.7
 Markdown==2.6.7
