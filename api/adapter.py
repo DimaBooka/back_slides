@@ -31,4 +31,4 @@ class SlidesAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request, emailconfirmation):
         url = reverse("account_confirm_email", args=[emailconfirmation.key])
         ret = build_absolute_uri(request, url)
-        return ret.replace('api', '#')
+        return ret.replace('api/rest-auth/registration/', '')
