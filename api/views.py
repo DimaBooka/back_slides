@@ -37,7 +37,6 @@ from slides.models import (
 
 
 User = get_user_model()
-redis_con = redis.from_url(settings.REDIS_CON)
 
 
 class PresentationViewSet(viewsets.ModelViewSet):
