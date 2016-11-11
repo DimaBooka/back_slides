@@ -1,6 +1,6 @@
 import json
 
-import redis
+from django.core.cache import cache
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
 from django.conf import settings
@@ -98,13 +98,12 @@ def accept_email_view(request):
         password = request.data.get('password', '')
 
         if User.objects.filter(email=email).exists() and not password:
-            redis_con.set(request.user.id, email)
-            redis_con.expire(request.user.id, 1800)
+            cache.set(request.user.id, email, 1800)
             return HttpResponse(content=json.dumps({"email": "exists"}), status=200, content_type='application/json',)
 
         elif password:
-            if User.objects.get(email=redis_con.get(request.user.id)).check_password(password):
-                SocialAccount.objects.filter(user_id=request.user.id).update(user_id=User.objects.get(email=redis_con.get(request.user.id)).pk)
+            if User.objects.get(email=cache.get(request.user.id)).check_password(password):
+                SocialAccount.objects.filter(user_id=request.user.id).update(user_id=User.objects.get(email=cache.get(request.user.id)).pk)
                 User.objects.filter(username=request.user.username).delete()
                 return HttpResponse(content=json.dumps({"success": request.user.auth_token.key}),
                                     status=200,

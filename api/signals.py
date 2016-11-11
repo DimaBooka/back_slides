@@ -22,10 +22,12 @@ def callback(instance, **kwargs):
         password = generate_password()
         instance.user.set_password(password)
         instance.user.save()
-        send_mail(
-            instance.user.email,
-            'Your login {}, and your password {}'.format(instance.user.username, password),
-            'sotona-streaming.com',
-            [instance.user.email],
-            fail_silently=False,
-        )
+        if instance.user.email:
+            send_mail(
+                instance.user.email,
+                'Your login {}, and your password {}'.format(instance.user.username, password),
+                'sotona-streaming.com',
+                [instance.user.email],
+                fail_silently=False,
+            )
+

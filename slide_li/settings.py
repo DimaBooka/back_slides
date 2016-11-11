@@ -147,6 +147,13 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'localhost:6379',
+    },
+}
+
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
 }
