@@ -34,7 +34,7 @@ def callback(instance, **kwargs):
 
 
 @receiver(email_confirmed)
-def email_confirmed_(request, email_address, **kwargs):
+def email_confirmed(request, email_address, **kwargs):
     if email_address.user.email != email_address.email:
         User.objects.filter(email=email_address.user.email).update(email=email_address.email)
         EmailAddress.objects.filter(pk=email_address.pk).update(primary=True)
