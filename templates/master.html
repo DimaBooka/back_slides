@@ -262,11 +262,6 @@
   }
 
   function setupPeerConnection(stream, uuid) {
-      var configuration = {
-        'iceServers': [{
-        'url': '{{config_stunserver}}'
-        }]
-      };
       // Setup stream listening
       getPeerConnection(uuid).addStream(stream);
       getPeerConnection(uuid).onaddstream = function(e) {
