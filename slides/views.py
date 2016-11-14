@@ -3,7 +3,7 @@ from django.views.generic import View
 from slides.models import Event
 from django.conf import settings
 from django.views.decorators.clickjacking import xframe_options_exempt
-from slide_li.settings import SOCKET_ADDR, STUN_SERVER_CONFIG
+from slide_li.settings import SOCKET_ADDR, STUN_URL
 
 
 class LivePresentationView(View):
@@ -15,7 +15,7 @@ class LivePresentationView(View):
             'id': pk,
             'socket_addr': SOCKET_ADDR,
             'prefix': 'wss' if settings.SSL else 'ws',
-            'config_stunserver': STUN_SERVER_CONFIG
+            'config_stunserver': STUN_URL
         }
         print(request.user, event.author)
         if event.date_started and not event.date_finished:
