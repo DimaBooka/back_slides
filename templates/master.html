@@ -262,7 +262,6 @@
   }
 
   function setupPeerConnection(stream, uuid) {
-      var configuration = '{{config_stunserver}}';
       // Setup stream listening
       getPeerConnection(uuid).addStream(stream);
       getPeerConnection(uuid).onaddstream = function(e) {
@@ -297,7 +296,11 @@
       if (peerConnections[id]) {
           return peerConnections[id];
       };
-      var configuration = '{{config_stunserver}}';
+      var configuration = {
+        'iceServers': [{
+        'url': '{{config_stunserver}}'
+        }]
+      };
       var pc = new RTCPeerConnection(configuration);
       pc.onicecandidate = function(event) {
           if (event.candidate) {
