@@ -262,11 +262,6 @@
   }
 
   function setupPeerConnection(stream, uuid) {
-      var configuration = {
-          "iceServers": [{
-              "url": "stun:stun.l.google.com:19302"
-          }]
-      };
       // Setup stream listening
       getPeerConnection(uuid).addStream(stream);
       getPeerConnection(uuid).onaddstream = function(e) {
@@ -302,9 +297,7 @@
           return peerConnections[id];
       };
       var configuration = {
-          "iceServers": [{
-              "url": "stun:stun.1.google.com:19302"
-          }]
+          "iceServers": {{ ice_servers | safe }},
       };
       var pc = new RTCPeerConnection(configuration);
       pc.onicecandidate = function(event) {
