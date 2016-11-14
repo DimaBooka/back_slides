@@ -165,7 +165,11 @@
   }
 
   function setupPeerConnection() {
-      var configuration = '{{config_stunserver}}';
+      var configuration = {
+        'iceServers': [{
+        'url': '{{config_stunserver}}'
+        }]
+      };
       yourConnection = null;
       yourConnection = new RTCPeerConnection(configuration);
       // Setup stream listening
