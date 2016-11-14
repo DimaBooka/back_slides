@@ -3,7 +3,8 @@ import json
 from django.core.cache import cache
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount
-from django.conf import settings
+from rest_auth.registration.serializers import SocialLoginSerializer
+from rest_framework.exceptions import APIException
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import deprecate_current_app
 from django.http import HttpResponse
@@ -22,7 +23,12 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from api.filters import PresentationFilter, EventFilter, CommentaryFilter, PublishedPresentationFilter
+from api.filters import (
+    PresentationFilter,
+    EventFilter,
+    CommentaryFilter,
+    PublishedPresentationFilter
+)
 from api.permissions import IsOwnerOrStaffOrReadOnly
 from api.serializers import (
     CommentarySerializer,
@@ -85,7 +91,17 @@ class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
 
 
-class FacebookLogin(SocialLoginView):
+class SlidesSocialLoginView(SocialLoginView):
+
+    serializer_class = SocialLoginSerializer
+
+    def process_login(self):
+        if not EmailAddress.objects.get(email=self.user.email).verified:
+            raise APIException('Email is not confirmed. Please check your email for account confirmation')
+        return super().process_login()
+
+
+class FacebookLogin(SlidesSocialLoginView):
     adapter_class = FacebookOAuth2Adapter
 
 
@@ -96,26 +112,32 @@ def accept_email_view(request):
         email = request.data.get('email', '')
         password = request.data.get('password', '')
 
-        if User.objects.filter(email=email).exists() and not password:
+        if email and User.objects.filter(email=email).exists() and not password:
             cache.set(request.user.id, email, 1800)
-            return HttpResponse(content=json.dumps({"email": "exists"}), status=200, content_type='application/json',)
+            return HttpResponse(content=json.dumps({"email": "exists"}),
+                                status=200,
+                                content_type='application/json',)
 
         elif password:
             if User.objects.get(email=cache.get(request.user.id)).check_password(password):
-                SocialAccount.objects.filter(user_id=request.user.id).update(user_id=User.objects.get(email=cache.get(request.user.id)).pk)
+                SocialAccount.objects.filter(user_id=request.user.id).update(
+                    user_id=User.objects.get(email=cache.get(request.user.id)).pk)
                 User.objects.filter(username=request.user.username).delete()
                 return HttpResponse(content=json.dumps({"success": request.user.auth_token.key}),
                                     status=200,
                                     content_type='application')
             else:
-                return HttpResponse(content=json.dumps({"error": "Incorrect password"}), status=400, content_type='application/json',)
+                return HttpResponse(content=json.dumps({"error": "Incorrect password"}),
+                                    status=400, content_type='application/json',)
 
         else:
             User.objects.filter(username=request.user.username).update(email=email)
-            EmailAddress.objects.create(email=email, verified=True,
-                                        user_id=request.user.id, primary=True)
+            EmailAddress.objects.create(email=email, verified=False,
+                                        user_id=request.user.id,
+                                        primary=True).send_confirmation()
 
-    return HttpResponse(content=json.dumps({"success": request.user.auth_token.key}), status=201, content_type='application/json',)
+    return HttpResponse(content=json.dumps({"success": 'You need to check your email to confirm email address'}),
+                        status=201, content_type='application/json',)
 
 
 class PasswordReset(PasswordResetView):

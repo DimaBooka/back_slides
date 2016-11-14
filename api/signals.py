@@ -1,3 +1,4 @@
+from allauth.account.signals import email_confirmed
 from allauth.socialaccount.models import SocialAccount, EmailAddress
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -30,3 +31,11 @@ def callback(instance, **kwargs):
                 [instance.user.email],
                 fail_silently=False,
             )
+
+
+@receiver(email_confirmed)
+def email_confirmed_(request, email_address, **kwargs):
+    if email_address.user.email != email_address.email:
+        User.objects.filter(email=email_address.user.email).update(email=email_address.email)
+        EmailAddress.objects.filter(pk=email_address.pk).update(primary=True)
+        EmailAddress.objects.filter(email=email_address.user.email).delete()

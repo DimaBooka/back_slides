@@ -1,3 +1,4 @@
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from rest_framework import serializers
@@ -69,8 +70,22 @@ class EventSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
 
+    def update(self, instance, validated_data):
+        new_email = validated_data.get('email', '')
+        if instance.email != new_email:
+            EmailAddress.objects.create(email=new_email, verified=False, primary=False, user_id=instance.id)
+            EmailAddress.objects.get(email=new_email).send_confirmation()
+            validated_data.pop('email')
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        return instance
+
+    def validate(self, attrs):
+        if EmailAddress.objects.filter(email=attrs.get('email', '')).exists():
+            raise serializers.ValidationError('This email already exists')
+
     class Meta:
         model = User
         exclude = ['password', 'groups', 'user_permissions']
-
-
