@@ -297,9 +297,7 @@
           return peerConnections[id];
       };
       var configuration = {
-        'iceServers': [{
-        'url': '{{config_stunserver}}'
-        }]
+          "iceServers": {{ ice_servers | safe }},
       };
       var pc = new RTCPeerConnection(configuration);
       pc.onicecandidate = function(event) {

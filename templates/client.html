@@ -166,9 +166,7 @@
 
   function setupPeerConnection() {
       var configuration = {
-        'iceServers': [{
-        'url': '{{config_stunserver}}'
-        }]
+          "iceServers": {{ ice_servers | safe }},
       };
       yourConnection = null;
       yourConnection = new RTCPeerConnection(configuration);
