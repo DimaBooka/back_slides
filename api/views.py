@@ -96,7 +96,11 @@ class SlidesSocialLoginView(SocialLoginView):
     serializer_class = SocialLoginSerializer
 
     def process_login(self):
-        if not EmailAddress.objects.get(email=self.user.email).verified:
+        try:
+            email_verified = EmailAddress.objects.get(email=self.user.email).verified
+        except:
+            return super().process_login()
+        if not email_verified:
             raise APIException('Email is not confirmed. Please check your email for account confirmation')
         return super().process_login()
 
