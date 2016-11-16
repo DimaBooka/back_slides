@@ -83,8 +83,10 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
     def validate(self, attrs):
-        if EmailAddress.objects.filter(email=attrs.get('email', '')).exists():
+        if EmailAddress.objects.filter(email=attrs.get('email', '')).exists() and \
+                      self.instance.email != attrs.get('email', ''):
             raise serializers.ValidationError('This email already exists')
+        return attrs
 
     class Meta:
         model = User
