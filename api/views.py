@@ -112,12 +112,13 @@ class FacebookLogin(SlidesSocialLoginView):
 @api_view(['POST'])
 def accept_email_view(request):
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.user.is_authenticated() and not request.user.email:
         email = request.data.get('email', '')
         password = request.data.get('password', '')
 
         if email and User.objects.filter(email=email).exists() and not password:
             cache.set(request.user.id, email, 1800)
+
             return HttpResponse(content=json.dumps({"email": "exists"}),
                                 status=200,
                                 content_type='application/json',)
@@ -127,9 +128,11 @@ def accept_email_view(request):
                 SocialAccount.objects.filter(user_id=request.user.id).update(
                     user_id=User.objects.get(email=cache.get(request.user.id)).pk)
                 User.objects.filter(username=request.user.username).delete()
+
                 return HttpResponse(content=json.dumps({"success": request.user.auth_token.key}),
                                     status=200,
                                     content_type='application')
+
             else:
                 return HttpResponse(content=json.dumps({"error": "Incorrect password"}),
                                     status=400, content_type='application/json',)
@@ -140,8 +143,12 @@ def accept_email_view(request):
                                         user_id=request.user.id,
                                         primary=True).send_confirmation()
 
-    return HttpResponse(content=json.dumps({"success": 'You need to check your email to confirm email address'}),
-                        status=201, content_type='application/json',)
+            return HttpResponse(content=json.dumps({"success": 'You need to check your email to confirm email address'}),
+                                status=201, content_type='application/json',)
+
+    else:
+        return HttpResponse(content=json.dumps({"error": 'not allowed'}),
+                                status=400, content_type='application/json',)
 
 
 class PasswordReset(PasswordResetView):
