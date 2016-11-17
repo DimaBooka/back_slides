@@ -72,7 +72,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         new_email = validated_data.get('email', '')
-        if instance.email != new_email:
+        if new_email and instance.email != new_email:
             EmailAddress.objects.create(email=new_email, verified=False, primary=False, user_id=instance.id)
             EmailAddress.objects.get(email=new_email).send_confirmation()
             validated_data.pop('email')
