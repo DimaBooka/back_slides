@@ -54,6 +54,7 @@ class User(AbstractUser):
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=16, null=True, blank=True)
     gender = models.IntegerField(choices=GENDER_CHOICES, default=UNKNOWN)
+    all_fields_completed = models.BooleanField(default=False)
 
     class Meta:
         swappable = 'AUTH_USER_MODEL'
