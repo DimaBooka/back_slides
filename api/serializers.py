@@ -2,7 +2,11 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from rest_framework import serializers
+from urllib.parse import urlparse
 
+from rest_framework.exceptions import ValidationError
+
+from api.fields import SlidesUrlAndFileField
 from slides.models import Presentation, Commentary, Event
 
 User = get_user_model()
@@ -18,6 +22,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 class PresentationSerializer(serializers.ModelSerializer):
     creator_info = SimpleUserSerializer(read_only=True, source='creator')
     creator = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
+    slides = SlidesUrlAndFileField()
 
     def validate_creator(self, value):
         request = self.context.get('request')
@@ -26,6 +31,27 @@ class PresentationSerializer(serializers.ModelSerializer):
             return value
 
         return request.user
+
+    def validate_slides(self, value):
+        if type(value) is str:
+            if len(value) > 255:
+                raise ValidationError('Link length is very long')
+            elif urlparse(value).scheme != 'https' and urlparse(value).scheme != 'http':
+                raise ValidationError('Link scheme does not supported')
+        return value
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        if urlparse(instance.slides.name).scheme:
+            Presentation.save_content(instance, 'create')
+
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        if type(validated_data.get('slides', '')) is str and urlparse(validated_data.get('slides', '')).scheme:
+            Presentation.save_content(instance, 'update')
+        return instance
 
     class Meta:
         model = Presentation
