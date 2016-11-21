@@ -1,17 +1,42 @@
+import os
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
+import urllib
+from django.core.files.base import ContentFile
+from rest_framework.exceptions import ValidationError
 
 
 class Presentation(models.Model):
     name = models.CharField(max_length=256)
     description = models.TextField(max_length=4096)
-    slides = models.FileField(upload_to='presentations')
+    slides = models.FileField(upload_to='presentations', max_length=255)
     thumbnail = models.ImageField(upload_to='thumbnails')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL)
     date_created = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField()
+
+    def save_content(self, method):
+        try:
+            req = urllib.request.urlopen(self.slides.name)
+        except:
+            self.delete_data(method)
+            raise ValidationError({'error': 'Link is not valid'})
+        content_length = req.headers.get("Content-Length", '')
+        if content_length and int(content_length) > 2097152:
+            self.delete_data(method)
+            raise ValidationError({'error': 'File is bigger than 2 MB'})
+        elif not content_length:
+            self.delete_data(method)
+            raise ValidationError({'error': 'Raw text not detected'})
+        fname = os.path.basename(self.slides.name)
+        self.slides.save(name=fname, content=ContentFile(req.read().decode('utf-8')))
+
+    def delete_data(self, method):
+        if method == 'create':
+            Presentation.objects.filter(pk=self.pk).delete()
 
     def __str__(self):
         return self.name
