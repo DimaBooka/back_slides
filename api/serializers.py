@@ -125,7 +125,7 @@ class UserSerializer(serializers.ModelSerializer):
 class SlidesRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(required=False, allow_null=True)
     last_name = serializers.CharField(required=False, allow_null=True)
-    birth_date = serializers.DateTimeField(required=False, allow_null=True)
+    birth_date = serializers.CharField(required=False, allow_null=True)
     gender = serializers.CharField(required=False, allow_null=True)
     timezone = serializers.CharField(required=False, allow_null=True)
 
