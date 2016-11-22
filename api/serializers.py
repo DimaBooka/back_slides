@@ -123,11 +123,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SlidesRegisterSerializer(RegisterSerializer):
-    first_name = serializers.CharField(required=False)
-    last_name = serializers.CharField(required=False)
-    birth_date = serializers.CharField(required=False)
-    gender = serializers.CharField(required=False)
-    timezone = serializers.CharField(required=False)
+    first_name = serializers.CharField(required=False, allow_null=True)
+    last_name = serializers.CharField(required=False, allow_null=True)
+    birth_date = serializers.DateTimeField(required=False, allow_null=True)
+    gender = serializers.CharField(required=False, allow_null=True)
+    timezone = serializers.CharField(required=False, allow_null=True)
 
     def get_cleaned_data(self):
         return {
