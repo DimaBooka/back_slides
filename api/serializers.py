@@ -1,6 +1,9 @@
+from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
+from allauth.account.utils import setup_user_email
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
+from rest_auth.registration.app_settings import RegisterSerializer
 from rest_framework import serializers
 from urllib.parse import urlparse
 
@@ -117,3 +120,32 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['password', 'groups', 'user_permissions']
+
+
+class SlidesRegisterSerializer(RegisterSerializer):
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    birth_date = serializers.CharField(required=False)
+    gender = serializers.CharField(required=False)
+    timezone = serializers.CharField(required=False)
+
+    def get_cleaned_data(self):
+        return {
+            'username': self.validated_data.get('username', ''),
+            'password1': self.validated_data.get('password1', ''),
+            'email': self.validated_data.get('email', ''),
+            'first_name': self.validated_data.get('first_name', ''),
+            'last_name': self.validated_data.get('last_name', ''),
+            'birth_date': self.validated_data.get('birth_date', ''),
+            'gender': self.validated_data.get('gender', ''),
+            'timezone': self.validated_data.get('timezone', ''),
+        }
+
+    def save(self, request):
+        adapter = get_adapter()
+        user = adapter.new_user(request)
+        self.cleaned_data = self.get_cleaned_data()
+        adapter.save_user(request, user, self)
+        self.custom_signup(request, user)
+        setup_user_email(request, user, [])
+        return user
