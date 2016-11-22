@@ -1,5 +1,6 @@
 import os
 
+import pytz
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -80,6 +81,7 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=16, null=True, blank=True)
     gender = models.IntegerField(choices=GENDER_CHOICES, default=UNKNOWN)
     all_fields_completed = models.BooleanField(default=False)
+    timezone = models.CharField(choices=[(x, x) for x in pytz.common_timezones], default="UTC", max_length=100)
 
     class Meta:
         swappable = 'AUTH_USER_MODEL'

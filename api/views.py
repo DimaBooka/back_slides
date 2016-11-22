@@ -13,7 +13,7 @@ from django.shortcuts import get_object_or_404, redirect
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 
-from rest_auth.registration.views import SocialLoginView, VerifyEmailView
+from rest_auth.registration.views import SocialLoginView, VerifyEmailView, RegisterView
 from rest_framework.decorators import detail_route, api_view
 from rest_auth.views import PasswordResetView
 from rest_framework import status
@@ -34,7 +34,7 @@ from api.serializers import (
     CommentarySerializer,
     EventSerializer,
     PresentationSerializer,
-)
+    SlidesRegisterSerializer)
 from slides.models import (
     Commentary,
     Event,
@@ -179,3 +179,7 @@ class SlidesVerifyEmailView(VerifyEmailView):
 @deprecate_current_app
 def password_reset_complete(request):
     return redirect('/reset/done/')
+
+
+class SlidesRegisterView(RegisterView):
+    serializer_class = SlidesRegisterSerializer
