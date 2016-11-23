@@ -26,22 +26,32 @@ class LivePresentationView(View):
                 'slides': event.presentation.slides,
             })
         else:
-            current_time = event.date_planned
+            current_planned_date = event.date_planned
+            current_finished_date = event.date_finished
             fmt = '%H:%M %Y %m %d'
             template = 'wait.html'
             if request.user.is_authenticated():
-                zone = pytz.timezone(request.user.timezone)
-                server_time = current_time
-                local_time = server_time.astimezone(zone)
-                date = local_time.strftime(fmt)
-                hours = date[:6]
-                date = date[6:]
+                date_planned_dict = self.get_user_time(request.user.timezone, fmt, current_planned_date)
+                date_finished_dict = self.get_user_time(request.user.timezone, fmt, current_finished_date)
+                hours = date_planned_dict.get('hours', '') if not date_finished_dict.get('hours', '') else date_finished_dict.get('hours', '')
+                date = date_planned_dict.get('date', '') if not date_finished_dict.get('date', '') else date_finished_dict.get('date', '')
             else:
-                date = event.date_planned.strftime(fmt)[:6]
-                hours = event.date_planned.strftime(fmt)[6:]
+                date = event.date_planned.strftime(fmt)[:6] if not event.date_finished else event.date_finished.strftime(fmt)[:6]
+                hours = event.date_planned.strftime(fmt)[6:] if not event.date_finished else event.date_finished.strftime(fmt)[6:]
             ctx.update({
                 'state': 'planned' if not event.date_finished else 'finished',
-                'date': date if not event.date_finished else None,
-                'hours': hours if not event.date_finished else None,
+                'date': date,
+                'hours': hours,
             })
         return render(request, template, ctx)
+
+    def get_user_time(self, timezone, fmt, current_time):
+        if not current_time:
+            return {'hours': '', 'date': ''}
+        zone = pytz.timezone(timezone)
+        server_time = current_time
+        local_time = server_time.astimezone(zone)
+        date = local_time.strftime(fmt)
+        hours = date[:6]
+        date = date[6:]
+        return {'hours': hours, 'date': date}
