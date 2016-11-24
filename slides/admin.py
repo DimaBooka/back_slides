@@ -1,5 +1,5 @@
 from django.contrib import admin
-from slides.models import User, Presentation, Commentary
+from slides.models import User, Presentation, Commentary, Event
 
 
 @admin.register(User)
@@ -13,5 +13,10 @@ class PresentationAdmin(admin.ModelAdmin):
 
 
 @admin.register(Commentary)
+class CommentaryAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Event)
 class CommentaryAdmin(admin.ModelAdmin):
     pass
