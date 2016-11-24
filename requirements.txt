@@ -7,6 +7,7 @@ django-cors-headers==1.2.2
 django-filter==0.15.2
 django-redis-cache==1.7.1
 django-rest-auth==0.8.1
+django-rq==0.9.4
 djangorestframework==3.4.7
 Markdown==2.6.7
 oauthlib==2.0.0
